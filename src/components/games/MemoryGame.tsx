@@ -354,7 +354,7 @@ export function MemoryGame({ onBack, username }: Props) {
           className="grid gap-1.5 mx-auto"
           style={{
             gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
-            maxWidth: config.cols * 72,
+            maxWidth: config.cols * 60,
           }}
         >
           {cards.map(card => (

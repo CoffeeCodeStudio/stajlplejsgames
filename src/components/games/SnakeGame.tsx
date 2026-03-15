@@ -422,7 +422,7 @@ export function SnakeGame({ onBack, username }: Props) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
+      <div className="px-3 py-3 space-y-3">
         <div className="flex items-center justify-between">
           <button onClick={() => { endGame(); setGameState("menu"); }} className="retro-btn text-[10px]">← Avsluta</button>
           <div className="flex items-center gap-3 text-xs">

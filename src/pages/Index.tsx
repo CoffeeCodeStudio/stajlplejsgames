@@ -5,9 +5,9 @@ export default function GamesPage() {
   const { username } = usePlayer();
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col max-w-[500px] mx-auto">
       {/* Top navigation bar */}
-      <header className="retro-nav">
+      <header className="retro-nav text-[7px]">
         <span className="retro-nav-item active">🎮 SPEL</span>
         <span className="retro-nav-item">🏆 TOPPLISTA</span>
         {username && (
@@ -18,17 +18,17 @@ export default function GamesPage() {
       </header>
 
       {/* Sub header */}
-      <div className="bg-[hsl(222_40%_14%)] border-b-2 border-border px-4 py-2 flex items-center justify-between">
-        <h1 className="font-pixel text-xs text-primary text-shadow-retro tracking-wider">
+      <div className="bg-card border-b-2 border-border px-3 py-1.5 flex items-center justify-between">
+        <h1 className="font-pixel text-[8px] text-primary text-shadow-retro tracking-wider">
           GAME ZONE
         </h1>
         {username ? (
-          <span className="text-xs text-muted-foreground">
-            Inloggad som: <strong className="text-foreground">{username}</strong>
+          <span className="text-[10px] text-muted-foreground">
+            Inloggad: <strong className="text-foreground">{username}</strong>
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">
-            Gäst — lägg till <code className="text-primary">?usr=Namn</code> i URL:en
+          <span className="text-[10px] text-muted-foreground">
+            Gäst — <code className="text-primary">?usr=Namn</code>
           </span>
         )}
       </div>
@@ -39,9 +39,9 @@ export default function GamesPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t-2 border-border bg-[hsl(222_40%_10%)] py-2 text-center">
-        <p className="text-[10px] text-muted-foreground font-pixel">
-          © 2026 GAME ZONE · RETRO EDITION
+      <footer className="border-t-2 border-border bg-muted py-1.5 text-center">
+        <p className="text-[8px] text-muted-foreground font-pixel">
+          © 2026 GAME ZONE
         </p>
       </footer>
     </div>
