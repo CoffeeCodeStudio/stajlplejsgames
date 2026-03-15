@@ -137,7 +137,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
     broadcastChannel.current = channel;
     return () => { supabase.removeChannel(channel); };
-  }, [lobbyId, user?.id]); // eslint-disable-line
+  }, [lobbyId, guestId]); // eslint-disable-line
 
   const drawStroke = useCallback((points: DrawPoint[]) => {
     const canvas = canvasRef.current;
