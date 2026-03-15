@@ -129,7 +129,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     const channel = supabase.channel(`scribble-draw-${lobbyId}`);
     
     channel.on('broadcast', { event: 'draw' }, ({ payload }) => {
-      if (payload.drawer_id === user?.id) return;
+      if (payload.drawer_id === guestId) return;
       drawStroke(payload.points);
     }).on('broadcast', { event: 'clear' }, () => {
       clearCanvas();
