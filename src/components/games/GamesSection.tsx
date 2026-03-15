@@ -19,7 +19,6 @@ const SINGLE_PLAYER_GAMES = [
       "Vänd två kort i taget för att hitta par.",
       "Matchar korten? De försvinner!",
       "Färre drag och snabbare tid = högre poäng.",
-      "Bästa poäng sparas lokalt.",
     ],
   },
   {
@@ -36,14 +35,6 @@ const SINGLE_PLAYER_GAMES = [
       "Ju fler äpplen, desto snabbare går det.",
     ],
   },
-  {
-    id: "quiz",
-    name: "2000-tals Quiz",
-    icon: "❓",
-    description: "Testa dina kunskaper om 2000-talets kultur!",
-    players: "1 spelare",
-    available: false,
-  },
 ];
 
 const MULTI_PLAYER_GAMES = [
@@ -51,38 +42,31 @@ const MULTI_PLAYER_GAMES = [
     id: "scribble",
     name: "Scribble",
     icon: "🖌️",
-    description: "Rita och gissa med vänner i realtid! En spelare ritar, resten gissar.",
+    description: "Rita och gissa med vänner i realtid!",
     players: "2–8 spelare",
     available: true,
     rules: [
       "En spelare ritar, resten gissar i chatten.",
       "Du får 10 poäng för rätt svar.",
-      "Ritaren får poäng när någon gissar rätt.",
       "Varje runda har en tidsgräns på 60 sekunder.",
-      "Turerna roterar automatiskt mellan spelarna.",
-      "Lobbyn stängs när alla rundor är klara.",
     ],
-  },
-  {
-    id: "tic-tac-toe",
-    name: "Tre i rad",
-    icon: "❌",
-    description: "Klassiskt strategispel mot en vän.",
-    players: "2 spelare",
-    available: false,
   },
 ];
 
-export function GamesSection() {
+interface GamesSectionProps {
+  username: string | null;
+}
+
+export function GamesSection({ username }: GamesSectionProps) {
   const [activeLobbyId, setActiveLobbyId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "scribble-lobbies" | "memory" | "snake">("list");
 
   if (view === "memory") {
-    return <MemoryGame onBack={() => setView("list")} />;
+    return <MemoryGame onBack={() => setView("list")} username={username} />;
   }
 
   if (view === "snake") {
-    return <SnakeGame onBack={() => setView("list")} />;
+    return <SnakeGame onBack={() => setView("list")} username={username} />;
   }
 
   if (activeLobbyId) {
@@ -103,7 +87,7 @@ export function GamesSection() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
+    <div className="flex-1 overflow-y-auto">
       <div className="container px-4 py-8 max-w-2xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -111,8 +95,8 @@ export function GamesSection() {
             <Gamepad2 className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="font-display font-bold text-2xl">Spel</h1>
-            <p className="text-sm text-muted-foreground">Välj ett spel och utmana dina vänner!</p>
+            <h2 className="font-display font-bold text-2xl">Spel</h2>
+            <p className="text-sm text-muted-foreground">Välj ett spel och tävla på topplistan!</p>
           </div>
         </div>
 
@@ -120,7 +104,7 @@ export function GamesSection() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Users className="w-4 h-4 text-primary" />
-            <h2 className="font-display font-bold text-lg">Flera spelare</h2>
+            <h3 className="font-display font-bold text-lg">Flera spelare</h3>
           </div>
           <div className="space-y-3">
             {MULTI_PLAYER_GAMES.map(game => (
@@ -137,7 +121,7 @@ export function GamesSection() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <User className="w-4 h-4 text-primary" />
-            <h2 className="font-display font-bold text-lg">Enspelare</h2>
+            <h3 className="font-display font-bold text-lg">Enspelare</h3>
           </div>
           <div className="space-y-3">
             {SINGLE_PLAYER_GAMES.map(game => (
@@ -171,11 +155,11 @@ interface GameDef {
 function GameCard({ game, onPlay }: { game: GameDef; onPlay?: () => void }) {
   return (
     <div className={`rounded-xl border-2 border-border bg-card overflow-hidden ${game.available ? "hover:border-primary/50" : "opacity-60"} transition-colors`}>
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-2 flex items-center justify-between">
-        <h3 className="font-display font-bold text-sm text-white flex items-center gap-2">
+      <div className="bg-gradient-to-r from-primary/80 to-primary px-4 py-2 flex items-center justify-between">
+        <h4 className="font-display font-bold text-sm text-primary-foreground flex items-center gap-2">
           <span className="text-lg">{game.icon}</span> {game.name}
-        </h3>
-        <span className="text-xs text-white/80">{game.players}</span>
+        </h4>
+        <span className="text-xs text-primary-foreground/80">{game.players}</span>
       </div>
       <div className="p-4 flex items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground flex-1">{game.description}</p>
