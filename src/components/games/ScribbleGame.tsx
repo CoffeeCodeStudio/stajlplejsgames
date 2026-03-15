@@ -21,6 +21,8 @@ interface DrawPoint {
 interface ScribbleGameProps {
   lobbyId: string;
   onLeave: () => void;
+  guestId: string;
+  guestUsername: string | null;
 }
 
 const COLORS = ["#000000", "#ff0000", "#0066ff", "#00cc44", "#ff9900", "#9933ff", "#ff69b4", "#ffffff"];
@@ -37,9 +39,8 @@ const WORD_LIST = [
   "fotboll", "skateboard", "glass", "tårta", "clown", "dinosaurie",
 ];
 
-export function ScribbleGame({ lobbyId, onLeave }: ScribbleGameProps) {
-  const { lobby, players, guesses, joinLobby, submitGuess, leaveLobby } = useScribbleGame(lobbyId);
-  const { user } = useAuth();
+export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: ScribbleGameProps) {
+  const { lobby, players, guesses, joinLobby, submitGuess, leaveLobby } = useScribbleGame(lobbyId, guestId, guestUsername);
   const { toast } = useToast();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
