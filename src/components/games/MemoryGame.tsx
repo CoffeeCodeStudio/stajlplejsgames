@@ -339,9 +339,9 @@ export function MemoryGame({ onBack, username }: Props) {
   // Game board
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
+      <div className="px-3 py-3 space-y-3">
         <div className="flex items-center justify-between">
-          <button onClick={onBack} className="retro-btn text-[10px]">← Tillbaka</button>
+          <button onClick={onBack} className="retro-btn text-[10px]">←</button>
           <div className="flex items-center gap-3 text-xs">
             <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
             <span className="text-muted-foreground">🖱 {moves} drag</span>
