@@ -433,7 +433,7 @@ export function SnakeGame({ onBack, username }: Props) {
                 </div>
               </div>
               {isNewBest && score > 0 && <p className="font-pixel text-[9px] text-primary animate-pulse">⭐ NYTT REKORD! ⭐</p>}
-              {!username && <p className="text-[10px] text-muted-foreground">Poäng ej sparad — lägg till ?usr=Namn</p>}
+              
             </div>
           </div>
           <div className="flex flex-wrap gap-2 justify-center">
