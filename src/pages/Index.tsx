@@ -7,7 +7,7 @@ export default function GamesPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col max-w-[500px] mx-auto">
       {/* Top navigation bar */}
-      <header className="retro-nav text-[9px]">
+      <header className="retro-nav text-base">
         <span className="retro-nav-item active">🎮 SPEL</span>
         <span className="retro-nav-item">🏆 TOPPLISTA</span>
         {username && (
@@ -19,15 +19,15 @@ export default function GamesPage() {
 
       {/* Sub header */}
       <div className="bg-card border-b-2 border-border px-3 py-2 flex items-center justify-between">
-        <h1 className="font-pixel text-[10px] text-primary text-shadow-retro tracking-wider">
+        <h1 className="font-pixel text-xs text-primary text-shadow-retro tracking-wider">
           GAME ZONE
         </h1>
         {username ? (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-base text-muted-foreground">
             Inloggad: <strong className="text-foreground">{username}</strong>
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-base text-muted-foreground">
             Gäst — <code className="text-primary">?usr=Namn</code>
           </span>
         )}
