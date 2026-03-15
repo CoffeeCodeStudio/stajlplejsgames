@@ -316,7 +316,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     await supabase.from('scribble_lobbies').update({
       status: 'playing',
       current_word: word,
-      current_drawer_id: user?.id,
+      current_drawer_id: guestId,
       round_number: 1,
     }).eq('id', lobbyId);
     clearCanvas();
