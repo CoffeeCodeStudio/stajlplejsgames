@@ -5,7 +5,7 @@ import { ArrowLeft, RotateCcw, Trophy, Clock, Medal, Apple, ArrowUp, ArrowDown, 
 import { supabase } from "@/integrations/supabase/client";
 
 const GRID_SIZE = 20;
-const CELL_SIZE = 18;
+const CELL_SIZE = 16;
 const INITIAL_SPEED = 150;
 const SPEED_INCREASE = 2;
 const MIN_SPEED = 60;
@@ -305,8 +305,8 @@ export function SnakeGame({ onBack, username }: Props) {
   if (gameState === "leaderboard") {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-          <button onClick={() => setGameState("menu")} className="retro-btn text-xs">← Tillbaka</button>
+        <div className="px-3 py-4 space-y-3">
+          <button onClick={() => setGameState("menu")} className="retro-btn text-[10px]">← Tillbaka</button>
           <div className="retro-panel">
             <div className="retro-panel-header">🏆 TOPPLISTA — SNAKE</div>
             <div className="max-h-96 overflow-y-auto">
@@ -335,8 +335,8 @@ export function SnakeGame({ onBack, username }: Props) {
   if (gameState === "menu") {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-          <button onClick={onBack} className="retro-btn text-xs">← Tillbaka till spel</button>
+        <div className="px-3 py-4 space-y-3">
+          <button onClick={onBack} className="retro-btn text-[10px]">← Tillbaka till spel</button>
 
           <div className="retro-panel">
             <div className="retro-panel-header">🐍 SNAKE</div>
@@ -385,7 +385,7 @@ export function SnakeGame({ onBack, username }: Props) {
     const isNewBest = score >= highScore;
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4 text-center">
+        <div className="px-3 py-4 space-y-3 text-center">
           <div className="retro-panel">
             <div className="retro-panel-header">💀 GAME OVER</div>
             <div className="retro-panel-body space-y-3">
@@ -422,7 +422,7 @@ export function SnakeGame({ onBack, username }: Props) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
+      <div className="px-3 py-3 space-y-3">
         <div className="flex items-center justify-between">
           <button onClick={() => { endGame(); setGameState("menu"); }} className="retro-btn text-[10px]">← Avsluta</button>
           <div className="flex items-center gap-3 text-xs">

@@ -198,7 +198,7 @@ export function MemoryGame({ onBack, username }: Props) {
   if (showLeaderboard) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+        <div className="px-3 py-4 space-y-3">
           <button onClick={() => setShowLeaderboard(false)} className="retro-btn text-xs">← Tillbaka</button>
           <div className="retro-panel">
             <div className="retro-panel-header">🏆 TOPPLISTA — MEMORY</div>
@@ -239,8 +239,8 @@ export function MemoryGame({ onBack, username }: Props) {
   if (!difficulty) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-          <button onClick={onBack} className="retro-btn text-xs">← Tillbaka till spel</button>
+        <div className="px-3 py-4 space-y-3">
+          <button onClick={onBack} className="retro-btn text-[10px]">← Tillbaka till spel</button>
 
           <div className="retro-panel">
             <div className="retro-panel-header">🧠 MEMORY</div>
@@ -302,7 +302,7 @@ export function MemoryGame({ onBack, username }: Props) {
     const isNewBest = score >= best;
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4 text-center">
+        <div className="px-3 py-4 space-y-3 text-center">
           <div className="retro-panel">
             <div className="retro-panel-header">🎉 GRATTIS!</div>
             <div className="retro-panel-body space-y-3">
@@ -339,9 +339,9 @@ export function MemoryGame({ onBack, username }: Props) {
   // Game board
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
+      <div className="px-3 py-3 space-y-3">
         <div className="flex items-center justify-between">
-          <button onClick={onBack} className="retro-btn text-[10px]">← Tillbaka</button>
+          <button onClick={onBack} className="retro-btn text-[10px]">←</button>
           <div className="flex items-center gap-3 text-xs">
             <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
             <span className="text-muted-foreground">🖱 {moves} drag</span>
@@ -354,7 +354,7 @@ export function MemoryGame({ onBack, username }: Props) {
           className="grid gap-1.5 mx-auto"
           style={{
             gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
-            maxWidth: config.cols * 72,
+            maxWidth: config.cols * 60,
           }}
         >
           {cards.map(card => (
