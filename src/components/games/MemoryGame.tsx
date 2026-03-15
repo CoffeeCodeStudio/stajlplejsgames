@@ -302,7 +302,7 @@ export function MemoryGame({ onBack, username }: Props) {
     const isNewBest = score >= best;
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4 text-center">
+        <div className="px-3 py-4 space-y-3 text-center">
           <div className="retro-panel">
             <div className="retro-panel-header">🎉 GRATTIS!</div>
             <div className="retro-panel-body space-y-3">
