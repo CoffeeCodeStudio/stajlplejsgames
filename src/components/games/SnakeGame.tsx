@@ -335,58 +335,45 @@ export function SnakeGame({ onBack, username }: Props) {
   if (gameState === "menu") {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="container px-4 py-8 max-w-lg mx-auto space-y-6">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka till spel
-          </Button>
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+          <button onClick={onBack} className="retro-btn text-xs">← Tillbaka till spel</button>
 
-          <div className="text-center space-y-3">
-            <div className="text-6xl mb-2">🐍</div>
-            <h2 className="font-display font-bold text-3xl">Snake</h2>
-            <p className="text-muted-foreground text-sm">Styr ormen, ät äpplen och väx dig längre!</p>
-          </div>
-
-          <div className="space-y-3">
-            <Button
-              onClick={startGame}
-              className="w-full font-display text-lg py-6"
-              size="lg"
-            >
-              🎮 Starta spelet
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full font-display gap-2"
-              onClick={() => { setGameState("leaderboard"); fetchLeaderboard(); }}
-            >
-              <Medal className="w-4 h-4" /> Visa topplista
-            </Button>
-          </div>
-
-          {highScore > 0 && (
-            <div className="text-center">
-              <span className="text-xs text-muted-foreground">Ditt bästa: </span>
-              <span className="font-display font-bold text-primary">{highScore}p</span>
+          <div className="retro-panel">
+            <div className="retro-panel-header">🐍 SNAKE</div>
+            <div className="retro-panel-body text-center space-y-3">
+              <p className="text-sm text-muted-foreground">Styr ormen, ät äpplen och väx dig längre!</p>
+              {highScore > 0 && (
+                <p className="text-xs">Ditt bästa: <span className="text-primary font-bold">{highScore}p</span></p>
+              )}
+              <div className="retro-separator" />
+              <button onClick={startGame} className="retro-btn retro-btn-primary text-sm px-6 py-2">
+                ▶ STARTA SPELET
+              </button>
             </div>
-          )}
+          </div>
+
+          <button
+            className="retro-btn w-full justify-center"
+            onClick={() => { setGameState("leaderboard"); fetchLeaderboard(); }}
+          >
+            🏆 Visa topplista
+          </button>
 
           {!username && (
-            <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">
-                Lägg till <code className="bg-muted px-1 rounded font-mono text-foreground">?usr=DittNamn</code> i URL:en för att spara poäng på topplistan
-              </p>
+            <div className="retro-panel">
+              <div className="retro-panel-body text-center text-xs text-muted-foreground">
+                Lägg till <code className="text-primary bg-background px-1">?usr=DittNamn</code> i URL:en för att spara poäng
+              </div>
             </div>
           )}
 
-          <div className="rounded-xl border border-border bg-card/50 p-4 space-y-2">
-            <h3 className="font-display font-bold text-sm flex items-center gap-1"><Trophy className="w-3 h-3 text-primary" /> Kontroller</h3>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Piltangenter eller WASD för att styra</li>
-              <li>• Ät 🔴 äpplen för att växa och få poäng</li>
-              <li>• Undvik väggar och din egen svans</li>
-              <li>• Ju fler äpplen, desto snabbare!</li>
-            </ul>
+          <div className="retro-panel">
+            <div className="retro-panel-header">📖 KONTROLLER</div>
+            <div className="retro-panel-body text-xs text-muted-foreground space-y-1">
+              <p>• Piltangenter eller WASD för att styra</p>
+              <p>• Ät 🔴 äpplen för att växa och få poäng</p>
+              <p>• Undvik väggar och din egen svans!</p>
+            </div>
           </div>
         </div>
       </div>
