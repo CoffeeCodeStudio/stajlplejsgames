@@ -404,22 +404,6 @@ export function SnakeGame({ onBack, username }: Props) {
             🏆 Visa topplista
           </button>
 
-          {!username && (
-            <div className="retro-panel">
-              <div className="retro-panel-body text-center text-xs text-muted-foreground">
-                Lägg till <code className="text-primary bg-background px-1">?usr=DittNamn</code> i URL:en för att spara poäng
-              </div>
-            </div>
-          )}
-
-          <div className="retro-panel">
-            <div className="retro-panel-header">📖 KONTROLLER</div>
-            <div className="retro-panel-body text-xs text-muted-foreground space-y-1">
-              <p>• Piltangenter eller WASD för att styra</p>
-              <p>• Ät 🔴 äpplen för att växa och få poäng</p>
-              <p>• Undvik väggar och din egen svans!</p>
-            </div>
-          </div>
         </div>
       </div>
     );
