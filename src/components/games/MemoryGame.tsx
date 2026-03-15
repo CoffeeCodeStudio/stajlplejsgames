@@ -4,14 +4,29 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, RotateCcw, Trophy, Clock, MousePointerClick, Medal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const PIXEL_EMOJIS = [
-  "🎮", "👾", "🕹️", "🤖", "💾", "📟", "🌟", "🎵",
-  "🐱", "🐶", "🦊", "🐸", "🍕", "🚀", "⚡", "🔥",
+const SYMBOLS = [
+  { char: "★", color: "#ffcc00" },
+  { char: "♥", color: "#ff3366" },
+  { char: "♠", color: "#00ff88" },
+  { char: "♣", color: "#44ddff" },
+  { char: "♦", color: "#ff6622" },
+  { char: "☺", color: "#ffee55" },
+  { char: "☽", color: "#cc99ff" },
+  { char: "♪", color: "#ff44aa" },
+  { char: "★", color: "#ff8800" },
+  { char: "♥", color: "#ff0044" },
+  { char: "♠", color: "#66ffcc" },
+  { char: "♣", color: "#00ccff" },
+  { char: "♦", color: "#ffaa00" },
+  { char: "☺", color: "#88ff44" },
+  { char: "☽", color: "#aa88ff" },
+  { char: "♪", color: "#ff66cc" },
 ];
 
 interface Card {
   id: number;
   emoji: string;
+  color: string;
   flipped: boolean;
   matched: boolean;
 }
@@ -34,10 +49,10 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 function buildDeck(pairs: number): Card[] {
-  const emojis = shuffleArray(PIXEL_EMOJIS).slice(0, pairs);
-  const cards = emojis.flatMap((emoji, i) => [
-    { id: i * 2, emoji, flipped: false, matched: false },
-    { id: i * 2 + 1, emoji, flipped: false, matched: false },
+  const symbols = shuffleArray(SYMBOLS).slice(0, pairs);
+  const cards = symbols.flatMap((s, i) => [
+    { id: i * 2, emoji: s.char, color: s.color, flipped: false, matched: false },
+    { id: i * 2 + 1, emoji: s.char, color: s.color, flipped: false, matched: false },
   ]);
   return shuffleArray(cards);
 }
@@ -373,9 +388,9 @@ export function MemoryGame({ onBack, username }: Props) {
               disabled={card.matched}
             >
               {card.flipped || card.matched ? (
-                <span>{card.emoji}</span>
+                <span style={{ color: card.color, textShadow: `0 0 8px ${card.color}` }}>{card.emoji}</span>
               ) : (
-                <span className="text-muted-foreground text-sm">?</span>
+                <span className="text-muted-foreground text-sm font-pixel">?</span>
               )}
             </button>
           ))}
