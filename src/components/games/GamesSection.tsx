@@ -3,6 +3,7 @@ import { ScribbleLobbyList } from "./ScribbleLobbyList";
 import { ScribbleGame } from "./ScribbleGame";
 import { MemoryGame } from "./MemoryGame";
 import { SnakeGame } from "./SnakeGame";
+import { useGuestId } from "@/hooks/useGuestId";
 
 const GAMES = [
   {
