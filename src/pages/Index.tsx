@@ -47,7 +47,7 @@ export default function GamesPage() {
           href="https://coffeecodestudio.se" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="text-[7px] text-amber-400/80 hover:text-amber-300 font-pixel block"
+          className="text-[7px] text-primary/80 hover:text-primary font-pixel block"
         >
           Powered by Coffee Code Studio
         </a>
