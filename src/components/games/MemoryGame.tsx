@@ -388,9 +388,9 @@ export function MemoryGame({ onBack, username }: Props) {
               disabled={card.matched}
             >
               {card.flipped || card.matched ? (
-                <span>{card.emoji}</span>
+                <span style={{ color: card.color, textShadow: `0 0 8px ${card.color}` }}>{card.emoji}</span>
               ) : (
-                <span className="text-muted-foreground text-sm">?</span>
+                <span className="text-muted-foreground text-sm font-pixel">?</span>
               )}
             </button>
           ))}
