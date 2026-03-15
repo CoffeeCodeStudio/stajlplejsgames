@@ -5,7 +5,7 @@ import { ArrowLeft, RotateCcw, Trophy, Clock, Medal, Apple, ArrowUp, ArrowDown, 
 import { supabase } from "@/integrations/supabase/client";
 
 const GRID_SIZE = 20;
-const CELL_SIZE = 18;
+const CELL_SIZE = 16;
 const INITIAL_SPEED = 150;
 const SPEED_INCREASE = 2;
 const MIN_SPEED = 60;
