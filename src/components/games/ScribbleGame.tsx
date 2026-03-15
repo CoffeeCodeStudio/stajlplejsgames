@@ -224,7 +224,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       broadcastChannel.current?.send({
         type: 'broadcast',
         event: 'draw',
-        payload: { points: currentAction, drawer_id: user?.id },
+        payload: { points: currentAction, drawer_id: guestId },
       });
     }
     setCurrentAction([]);
