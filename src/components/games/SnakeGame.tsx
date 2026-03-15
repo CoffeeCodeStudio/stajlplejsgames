@@ -385,7 +385,10 @@ export function SnakeGame({ onBack, username }: Props) {
               </div>
               <p className="text-sm text-muted-foreground">Styr ormen, ät äpplen och väx dig längre!</p>
               {highScore > 0 && (
-                <p className="text-xs">Ditt bästa: <span className="text-primary font-bold">{highScore}p</span></p>
+                <div className="retro-inset p-3 my-2">
+                  <div className="font-pixel text-[9px] text-muted-foreground mb-1">DITT BÄSTA</div>
+                  <div className="font-pixel text-lg text-primary" style={{ textShadow: '0 0 8px hsl(var(--primary) / 0.6)' }}>{highScore}p</div>
+                </div>
               )}
               <div className="retro-separator" />
               <button onClick={startGame} className="retro-btn retro-btn-primary text-sm px-6 py-2">
