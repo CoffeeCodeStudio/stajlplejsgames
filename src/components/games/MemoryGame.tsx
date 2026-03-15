@@ -198,7 +198,7 @@ export function MemoryGame({ onBack, username }: Props) {
   if (showLeaderboard) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+        <div className="px-3 py-4 space-y-3">
           <button onClick={() => setShowLeaderboard(false)} className="retro-btn text-xs">← Tillbaka</button>
           <div className="retro-panel">
             <div className="retro-panel-header">🏆 TOPPLISTA — MEMORY</div>
