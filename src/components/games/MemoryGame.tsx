@@ -49,10 +49,10 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 function buildDeck(pairs: number): Card[] {
-  const emojis = shuffleArray(PIXEL_EMOJIS).slice(0, pairs);
-  const cards = emojis.flatMap((emoji, i) => [
-    { id: i * 2, emoji, flipped: false, matched: false },
-    { id: i * 2 + 1, emoji, flipped: false, matched: false },
+  const symbols = shuffleArray(SYMBOLS).slice(0, pairs);
+  const cards = symbols.flatMap((s, i) => [
+    { id: i * 2, emoji: s.char, color: s.color, flipped: false, matched: false },
+    { id: i * 2 + 1, emoji: s.char, color: s.color, flipped: false, matched: false },
   ]);
   return shuffleArray(cards);
 }
