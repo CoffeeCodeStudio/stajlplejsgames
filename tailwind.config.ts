@@ -72,6 +72,10 @@ export default {
         away: "hsl(var(--away-orange))",
         busy: "hsl(var(--busy-red))",
         offline: "hsl(var(--offline-gray))",
+        // Retro panel tokens
+        "panel-header": "hsl(var(--panel-header))",
+        "panel-border": "hsl(var(--panel-border))",
+        "panel-inset": "hsl(var(--panel-inset))",
       },
       borderRadius: {
         lg: "var(--radius)",
