@@ -19,37 +19,37 @@ body {
 @layer base {
   :root {
     /* Stajlplejs / LunarStorm palette */
-    --background: 222 47% 11%;        /* dark navy #0f172a */
-    --foreground: 0 0% 95%;           /* white text */
+    --background: 222 47% 11%;        /* dark navy */
+    --foreground: 0 0% 95%;
 
-    --card: 222 40% 14%;              /* slightly lighter navy */
+    --card: 195 52% 34%;              /* #296b84 teal panels */
     --card-foreground: 0 0% 95%;
 
-    --popover: 222 44% 12%;
+    --popover: 195 52% 30%;
     --popover-foreground: 0 0% 95%;
 
-    /* Orange/red accent */
-    --primary: 16 85% 50%;            /* #e2541d orange-red */
+    /* Orange-red accent #d76447 */
+    --primary: 12 62% 56%;
     --primary-foreground: 0 0% 100%;
 
     /* Silver/grey for secondary */
-    --secondary: 220 10% 40%;         /* grey */
+    --secondary: 195 40% 28%;
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 222 30% 18%;
-    --muted-foreground: 220 15% 60%;
+    --muted: 195 35% 22%;
+    --muted-foreground: 195 15% 65%;
 
-    --accent: 35 90% 55%;             /* warm amber */
-    --accent-foreground: 222 47% 11%;
+    --accent: 12 62% 56%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 20% 25%;
-    --input: 222 30% 18%;
-    --ring: 16 85% 50%;
+    --border: 195 30% 28%;
+    --input: 195 35% 22%;
+    --ring: 12 62% 56%;
 
-    --radius: 0px;                    /* sharp corners = retro */
+    --radius: 0px;
 
     /* Status colors */
     --online-green: 145 65% 42%;
@@ -58,19 +58,19 @@ body {
     --offline-gray: 220 10% 45%;
 
     /* Retro panel tokens */
-    --panel-header: 16 80% 45%;
+    --panel-header: 12 62% 46%;
     --panel-header-foreground: 0 0% 100%;
-    --panel-border: 220 20% 30%;
-    --panel-inset: 222 35% 10%;
+    --panel-border: 195 30% 25%;
+    --panel-inset: 195 45% 18%;
 
-    --sidebar-background: 222 40% 12%;
+    --sidebar-background: 195 52% 28%;
     --sidebar-foreground: 0 0% 92%;
-    --sidebar-primary: 16 85% 50%;
+    --sidebar-primary: 12 62% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 35 90% 55%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 20% 25%;
-    --sidebar-ring: 16 85% 50%;
+    --sidebar-accent: 12 62% 56%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 195 30% 25%;
+    --sidebar-ring: 12 62% 56%;
   }
 }
 
