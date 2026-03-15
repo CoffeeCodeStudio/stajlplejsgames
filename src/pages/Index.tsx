@@ -6,20 +6,32 @@ export default function GamesPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="font-display font-bold text-lg text-primary">🎮 Games</h1>
-          {username && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Spelar som</span>
-              <span className="font-display font-bold text-foreground bg-muted px-2 py-0.5 rounded-md">
-                {username}
-              </span>
-            </div>
-          )}
-        </div>
+      {/* Top navigation bar */}
+      <header className="retro-nav">
+        <span className="retro-nav-item active">🎮 SPEL</span>
+        <span className="retro-nav-item">🏆 TOPPLISTA</span>
+        {username && (
+          <span className="retro-nav-item ml-auto" style={{ cursor: 'default' }}>
+            👤 {username}
+          </span>
+        )}
       </header>
+
+      {/* Sub header */}
+      <div className="bg-[hsl(222_40%_14%)] border-b-2 border-border px-4 py-2 flex items-center justify-between">
+        <h1 className="font-pixel text-xs text-primary text-shadow-retro tracking-wider">
+          GAME ZONE
+        </h1>
+        {username ? (
+          <span className="text-xs text-muted-foreground">
+            Inloggad som: <strong className="text-foreground">{username}</strong>
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">
+            Gäst — lägg till <code className="text-primary">?usr=Namn</code> i URL:en
+          </span>
+        )}
+      </div>
 
       {/* Games content */}
       <main className="flex-1 flex flex-col">
@@ -27,13 +39,11 @@ export default function GamesPage() {
       </main>
 
       {/* Footer */}
-      {!username && (
-        <footer className="border-t border-border bg-card/50 py-3 text-center">
-          <p className="text-xs text-muted-foreground">
-            Lägg till <code className="bg-muted px-1.5 py-0.5 rounded text-foreground font-mono">?usr=DittNamn</code> i URL:en för att spara poäng
-          </p>
-        </footer>
-      )}
+      <footer className="border-t-2 border-border bg-[hsl(222_40%_10%)] py-2 text-center">
+        <p className="text-[10px] text-muted-foreground font-pixel">
+          © 2026 GAME ZONE · RETRO EDITION
+        </p>
+      </footer>
     </div>
   );
 }

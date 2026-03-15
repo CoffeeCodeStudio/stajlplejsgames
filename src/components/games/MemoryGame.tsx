@@ -198,49 +198,37 @@ export function MemoryGame({ onBack, username }: Props) {
   if (showLeaderboard) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="container px-4 py-8 max-w-lg mx-auto space-y-4">
-          <Button variant="ghost" size="sm" onClick={() => setShowLeaderboard(false)} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka
-          </Button>
-          <div className="text-center space-y-2">
-            <Medal className="w-10 h-10 mx-auto text-primary" />
-            <h2 className="font-display font-bold text-2xl">Topplista</h2>
-          </div>
-          <div className="flex gap-1 justify-center">
-            {(["easy", "medium", "hard"] as Difficulty[]).map(d => (
-              <Button
-                key={d}
-                size="sm"
-                variant={leaderboardDiff === d ? "default" : "outline"}
-                onClick={() => { setLeaderboardDiff(d); fetchLeaderboard(d); }}
-                className="font-display text-xs"
-              >
-                {DIFFICULTY_CONFIG[d].label.split(" ")[0]}
-              </Button>
-            ))}
-          </div>
-          <div className="rounded-xl border-2 border-border bg-card overflow-hidden">
-            <div className="bg-gradient-to-r from-primary/80 to-primary px-4 py-2">
-              <span className="font-display font-bold text-primary-foreground text-sm">{DIFFICULTY_CONFIG[leaderboardDiff].label}</span>
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+          <button onClick={() => setShowLeaderboard(false)} className="retro-btn text-xs">← Tillbaka</button>
+          <div className="retro-panel">
+            <div className="retro-panel-header">🏆 TOPPLISTA — MEMORY</div>
+            <div className="flex gap-1 p-2 bg-[hsl(222_30%_16%)] border-b border-border">
+              {(["easy", "medium", "hard"] as Difficulty[]).map(d => (
+                <button
+                  key={d}
+                  onClick={() => { setLeaderboardDiff(d); fetchLeaderboard(d); }}
+                  className={`retro-btn text-[10px] ${leaderboardDiff === d ? 'retro-btn-primary' : ''}`}
+                >
+                  {DIFFICULTY_CONFIG[d].label.split(" ")[0]}
+                </button>
+              ))}
             </div>
-            <ScrollArea className="max-h-96">
-              <div className="divide-y divide-border">
-                {leaderboard.length === 0 ? (
-                  <p className="text-center text-muted-foreground text-sm py-8">Inga poäng ännu — bli den första!</p>
-                ) : leaderboard.map((entry, i) => (
-                  <div key={entry.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <span className="w-6 text-center font-display font-bold text-sm">
-                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-display font-bold text-sm truncate block">{entry.username}</span>
-                      <span className="text-xs text-muted-foreground">{entry.moves} drag · {formatTime(entry.time_seconds)}</span>
-                    </div>
-                    <span className="font-display font-bold text-primary text-sm">{entry.score}p</span>
+            <div className="max-h-96 overflow-y-auto">
+              {leaderboard.length === 0 ? (
+                <p className="text-center text-muted-foreground text-xs py-8">Inga poäng ännu — bli den första!</p>
+              ) : leaderboard.map((entry, i) => (
+                <div key={entry.id} className="retro-table-row">
+                  <span className="w-8 text-center font-bold text-xs">
+                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-bold text-xs truncate block">{entry.username}</span>
+                    <span className="text-[10px] text-muted-foreground">{entry.moves} drag · {formatTime(entry.time_seconds)}</span>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                  <span className="font-bold text-primary text-xs">{entry.score}p</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -251,34 +239,34 @@ export function MemoryGame({ onBack, username }: Props) {
   if (!difficulty) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="container px-4 py-8 max-w-lg mx-auto space-y-6">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka till spel
-          </Button>
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+          <button onClick={onBack} className="retro-btn text-xs">← Tillbaka till spel</button>
 
-          <div className="text-center space-y-3">
-            <div className="text-6xl mb-2">🧠</div>
-            <h2 className="font-display font-bold text-3xl">Memory</h2>
-            <p className="text-muted-foreground text-sm">Hitta alla matchande par så snabbt du kan!</p>
+          <div className="retro-panel">
+            <div className="retro-panel-header">🧠 MEMORY</div>
+            <div className="retro-panel-body text-center space-y-3">
+              <p className="text-sm text-muted-foreground">Hitta alla matchande par så snabbt du kan!</p>
+              <div className="retro-separator" />
+              <p className="font-pixel text-[9px] text-primary uppercase">Välj svårighetsgrad</p>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="font-display font-bold text-center text-sm text-muted-foreground uppercase tracking-wider">Välj svårighetsgrad</h3>
+          <div className="space-y-2">
             {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, cfg]) => (
               <button
                 key={key}
                 onClick={() => startGame(key)}
-                className="w-full rounded-xl border-2 border-border bg-card hover:border-primary/50 transition-colors p-4 text-left group"
+                className="w-full retro-panel hover:border-primary transition-colors text-left"
               >
-                <div className="flex items-center justify-between">
+                <div className="retro-panel-body flex items-center justify-between">
                   <div>
-                    <span className="font-display font-bold text-base group-hover:text-primary transition-colors">{cfg.label}</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">{cfg.pairs * 2} kort</p>
+                    <span className="font-bold text-sm">{cfg.label}</span>
+                    <p className="text-[10px] text-muted-foreground">{cfg.pairs * 2} kort</p>
                   </div>
                   {bestScores[key] ? (
                     <div className="text-right">
-                      <div className="text-xs text-muted-foreground">Ditt bästa</div>
-                      <div className="font-display font-bold text-primary text-sm">{bestScores[key]}p</div>
+                      <div className="text-[10px] text-muted-foreground">Bästa</div>
+                      <div className="font-bold text-primary text-sm">{bestScores[key]}p</div>
                     </div>
                   ) : null}
                 </div>
@@ -286,19 +274,18 @@ export function MemoryGame({ onBack, username }: Props) {
             ))}
           </div>
 
-          <Button
-            variant="outline"
-            className="w-full font-display gap-2"
+          <button
+            className="retro-btn w-full justify-center"
             onClick={() => { setShowLeaderboard(true); fetchLeaderboard(leaderboardDiff); }}
           >
-            <Medal className="w-4 h-4" /> Visa topplista
-          </Button>
+            🏆 Visa topplista
+          </button>
 
           {!username && (
-            <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">
-                Lägg till <code className="bg-muted px-1 rounded font-mono text-foreground">?usr=DittNamn</code> i URL:en för att spara poäng på topplistan
-              </p>
+            <div className="retro-panel">
+              <div className="retro-panel-body text-center text-xs text-muted-foreground">
+                Lägg till <code className="text-primary bg-background px-1">?usr=DittNamn</code> i URL:en för att spara poäng
+              </div>
             </div>
           )}
         </div>
@@ -315,52 +302,34 @@ export function MemoryGame({ onBack, username }: Props) {
     const isNewBest = score >= best;
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="container px-4 py-8 max-w-lg mx-auto space-y-6 text-center">
-          <div className="text-6xl mb-2">🎉</div>
-          <h2 className="font-display font-bold text-3xl">Grattis!</h2>
-          <p className="text-muted-foreground">Du hittade alla {totalPairs} par!</p>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-xl border border-border bg-card p-3">
-              <Trophy className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="font-display font-bold text-xl text-primary">{score}p</div>
-              <div className="text-xs text-muted-foreground">Poäng</div>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-3">
-              <MousePointerClick className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="font-display font-bold text-xl">{moves}</div>
-              <div className="text-xs text-muted-foreground">Drag</div>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-3">
-              <Clock className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="font-display font-bold text-xl">{formatTime(seconds)}</div>
-              <div className="text-xs text-muted-foreground">Tid</div>
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4 text-center">
+          <div className="retro-panel">
+            <div className="retro-panel-header">🎉 GRATTIS!</div>
+            <div className="retro-panel-body space-y-3">
+              <p className="text-sm text-muted-foreground">Du hittade alla {totalPairs} par!</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="retro-inset p-2">
+                  <div className="font-bold text-primary text-lg">{score}p</div>
+                  <div className="text-[10px] text-muted-foreground">Poäng</div>
+                </div>
+                <div className="retro-inset p-2">
+                  <div className="font-bold text-lg">{moves}</div>
+                  <div className="text-[10px] text-muted-foreground">Drag</div>
+                </div>
+                <div className="retro-inset p-2">
+                  <div className="font-bold text-lg">{formatTime(seconds)}</div>
+                  <div className="text-[10px] text-muted-foreground">Tid</div>
+                </div>
+              </div>
+              {isNewBest && <p className="font-pixel text-[9px] text-primary animate-pulse">⭐ NYTT REKORD! ⭐</p>}
+              {!username && <p className="text-[10px] text-muted-foreground">Poäng ej sparad — lägg till ?usr=Namn</p>}
             </div>
           </div>
-
-          {isNewBest && (
-            <div className="text-sm font-display font-bold text-primary animate-pulse">
-              ⭐ Nytt rekord! ⭐
-            </div>
-          )}
-
-          {!username && (
-            <p className="text-xs text-muted-foreground">Poängen sparades inte — lägg till ?usr=DittNamn i URL:en</p>
-          )}
-
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Button variant="outline" onClick={() => startGame(difficulty)} className="font-display gap-1">
-              <RotateCcw className="w-4 h-4" /> Spela igen
-            </Button>
-            <Button variant="outline" onClick={() => { setShowLeaderboard(true); setLeaderboardDiff(difficulty); fetchLeaderboard(difficulty); }} className="font-display gap-1">
-              <Medal className="w-4 h-4" /> Topplista
-            </Button>
-            <Button variant="outline" onClick={() => setDifficulty(null)} className="font-display">
-              Byt svårighet
-            </Button>
-            <Button variant="ghost" onClick={onBack} className="font-display">
-              Tillbaka
-            </Button>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button onClick={() => startGame(difficulty)} className="retro-btn">🔄 Igen</button>
+            <button onClick={() => { setShowLeaderboard(true); setLeaderboardDiff(difficulty); fetchLeaderboard(difficulty); }} className="retro-btn">🏆 Topplista</button>
+            <button onClick={() => setDifficulty(null)} className="retro-btn">Byt svårighet</button>
+            <button onClick={onBack} className="retro-btn">← Tillbaka</button>
           </div>
         </div>
       </div>
@@ -370,30 +339,22 @@ export function MemoryGame({ onBack, username }: Props) {
   // Game board
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="container px-4 py-4 max-w-2xl mx-auto space-y-4">
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka
-          </Button>
-          <div className="flex items-center gap-4 text-sm font-display">
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="w-3.5 h-3.5" /> {formatTime(seconds)}
-            </span>
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <MousePointerClick className="w-3.5 h-3.5" /> {moves} drag
-            </span>
+          <button onClick={onBack} className="retro-btn text-[10px]">← Tillbaka</button>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
+            <span className="text-muted-foreground">🖱 {moves} drag</span>
             <span className="text-primary font-bold">{matchedPairs}/{totalPairs} par</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => startGame(difficulty)} className="text-muted-foreground">
-            <RotateCcw className="w-4 h-4" />
-          </Button>
+          <button onClick={() => startGame(difficulty)} className="retro-btn text-[10px]">🔄</button>
         </div>
 
         <div
-          className="grid gap-2 mx-auto"
+          className="grid gap-1.5 mx-auto"
           style={{
             gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
-            maxWidth: config.cols * 80,
+            maxWidth: config.cols * 72,
           }}
         >
           {cards.map(card => (
@@ -401,28 +362,27 @@ export function MemoryGame({ onBack, username }: Props) {
               key={card.id}
               onClick={() => handleCardClick(card.id)}
               className={`
-                aspect-square rounded-lg border-2 text-2xl sm:text-3xl font-bold
-                transition-all duration-300 transform
+                aspect-square border-2 text-xl sm:text-2xl font-bold transition-all duration-200
                 ${card.matched
-                  ? "border-primary/50 bg-primary/10 scale-95 opacity-60"
+                  ? "border-primary/40 bg-primary/10 opacity-50"
                   : card.flipped
-                    ? "border-primary bg-card rotate-0 scale-105"
-                    : "border-border bg-gradient-to-br from-primary/60 to-primary/80 hover:from-primary/50 hover:to-primary/70 cursor-pointer hover:scale-105"
+                    ? "border-primary bg-[hsl(222_35%_18%)]"
+                    : "border-border bg-[hsl(220_20%_25%)] hover:border-primary/50 cursor-pointer hover:bg-[hsl(220_20%_28%)]"
                 }
               `}
               disabled={card.matched}
             >
               {card.flipped || card.matched ? (
-                <span className="block">{card.emoji}</span>
+                <span>{card.emoji}</span>
               ) : (
-                <span className="text-primary-foreground/30 text-lg font-display">?</span>
+                <span className="text-muted-foreground text-sm">?</span>
               )}
             </button>
           ))}
         </div>
 
-        <div className="text-center text-xs text-muted-foreground font-display">
-          Aktuell poäng: <span className="text-primary font-bold">{score}p</span>
+        <div className="text-center text-[10px] text-muted-foreground">
+          Poäng: <span className="text-primary font-bold">{score}p</span>
         </div>
       </div>
     </div>
