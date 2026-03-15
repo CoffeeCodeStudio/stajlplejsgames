@@ -339,30 +339,22 @@ export function MemoryGame({ onBack, username }: Props) {
   // Game board
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="container px-4 py-4 max-w-2xl mx-auto space-y-4">
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka
-          </Button>
-          <div className="flex items-center gap-4 text-sm font-display">
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="w-3.5 h-3.5" /> {formatTime(seconds)}
-            </span>
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <MousePointerClick className="w-3.5 h-3.5" /> {moves} drag
-            </span>
+          <button onClick={onBack} className="retro-btn text-[10px]">← Tillbaka</button>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
+            <span className="text-muted-foreground">🖱 {moves} drag</span>
             <span className="text-primary font-bold">{matchedPairs}/{totalPairs} par</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => startGame(difficulty)} className="text-muted-foreground">
-            <RotateCcw className="w-4 h-4" />
-          </Button>
+          <button onClick={() => startGame(difficulty)} className="retro-btn text-[10px]">🔄</button>
         </div>
 
         <div
-          className="grid gap-2 mx-auto"
+          className="grid gap-1.5 mx-auto"
           style={{
             gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
-            maxWidth: config.cols * 80,
+            maxWidth: config.cols * 72,
           }}
         >
           {cards.map(card => (
@@ -370,28 +362,27 @@ export function MemoryGame({ onBack, username }: Props) {
               key={card.id}
               onClick={() => handleCardClick(card.id)}
               className={`
-                aspect-square rounded-lg border-2 text-2xl sm:text-3xl font-bold
-                transition-all duration-300 transform
+                aspect-square border-2 text-xl sm:text-2xl font-bold transition-all duration-200
                 ${card.matched
-                  ? "border-primary/50 bg-primary/10 scale-95 opacity-60"
+                  ? "border-primary/40 bg-primary/10 opacity-50"
                   : card.flipped
-                    ? "border-primary bg-card rotate-0 scale-105"
-                    : "border-border bg-gradient-to-br from-primary/60 to-primary/80 hover:from-primary/50 hover:to-primary/70 cursor-pointer hover:scale-105"
+                    ? "border-primary bg-[hsl(222_35%_18%)]"
+                    : "border-border bg-[hsl(220_20%_25%)] hover:border-primary/50 cursor-pointer hover:bg-[hsl(220_20%_28%)]"
                 }
               `}
               disabled={card.matched}
             >
               {card.flipped || card.matched ? (
-                <span className="block">{card.emoji}</span>
+                <span>{card.emoji}</span>
               ) : (
-                <span className="text-primary-foreground/30 text-lg font-display">?</span>
+                <span className="text-muted-foreground text-sm">?</span>
               )}
             </button>
           ))}
         </div>
 
-        <div className="text-center text-xs text-muted-foreground font-display">
-          Aktuell poäng: <span className="text-primary font-bold">{score}p</span>
+        <div className="text-center text-[10px] text-muted-foreground">
+          Poäng: <span className="text-primary font-bold">{score}p</span>
         </div>
       </div>
     </div>
