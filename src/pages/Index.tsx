@@ -40,14 +40,14 @@ export default function GamesPage() {
 
       {/* Footer */}
       <footer className="border-t-2 border-border bg-muted py-1.5 text-center space-y-0.5">
-        <p className="text-[8px] text-muted-foreground font-pixel">
+        <p className="text-[9px] text-muted-foreground font-pixel">
           © 2026 GAME ZONE
         </p>
         <a 
           href="https://coffeecodestudio.se" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="text-[7px] text-primary/80 hover:text-primary font-pixel block"
+          className="text-[8px] text-primary/80 hover:text-primary font-pixel block"
         >
           Powered by Coffee Code Studio
         </a>
