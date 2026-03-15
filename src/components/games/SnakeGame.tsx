@@ -455,8 +455,8 @@ export function SnakeGame({ onBack, username }: Props) {
         {/* HUD bar */}
         <div className="retro-panel">
           <div className="retro-panel-body p-2 flex items-center justify-between">
-            <button onClick={() => { endGame(); setGameState("menu"); }} className="retro-btn text-xs py-0.5 px-2">✕ AVSLUTA</button>
-            <div className="flex items-center gap-4 font-pixel text-[10px]">
+            <button onClick={() => { endGame(); setGameState("menu"); }} className="retro-btn text-base py-0.5 px-2">✕ AVSLUTA</button>
+            <div className="flex items-center gap-4 font-pixel text-xs">
               <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
               <span style={{ color: '#ff1111' }}>🍎 {applesEaten}</span>
               <span className="text-primary font-bold">{score}P</span>
