@@ -26,6 +26,7 @@ const SYMBOLS = [
 interface Card {
   id: number;
   emoji: string;
+  color: string;
   flipped: boolean;
   matched: boolean;
 }
