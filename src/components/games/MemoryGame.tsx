@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, RotateCcw, Trophy, Clock, MousePointerClick, Medal, Users } from "lucide-react";
+import { ArrowLeft, RotateCcw, Trophy, Clock, MousePointerClick, Medal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
 
 const PIXEL_EMOJIS = [
   "🎮", "👾", "🕹️", "🤖", "💾", "📟", "🌟", "🎵",
@@ -70,11 +68,10 @@ interface HighscoreEntry {
 
 interface Props {
   onBack: () => void;
+  username: string | null;
 }
 
-export function MemoryGame({ onBack }: Props) {
-  const { user } = useAuth();
-  const { profile } = useProfile();
+export function MemoryGame({ onBack, username }: Props) {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [flippedIds, setFlippedIds] = useState<number[]>([]);
@@ -119,18 +116,18 @@ export function MemoryGame({ onBack }: Props) {
   }, []);
 
   const saveScore = useCallback(async (score: number, movesCount: number, timeSec: number, diff: Difficulty) => {
-    if (!user || !profile || scoreSaved) return;
+    if (!username || scoreSaved) return;
     setScoreSaved(true);
     await supabase.from('memory_highscores').insert({
-      user_id: user.id,
-      username: profile.username,
-      avatar_url: profile.avatar_url,
+      user_id: '00000000-0000-0000-0000-000000000000',
+      username: username,
+      avatar_url: null,
       score,
       moves: movesCount,
       time_seconds: timeSec,
       difficulty: diff,
     });
-  }, [user, profile, scoreSaved]);
+  }, [username, scoreSaved]);
 
   // Timer
   useEffect(() => {
@@ -153,7 +150,6 @@ export function MemoryGame({ onBack }: Props) {
           setBestScores(next);
           localStorage.setItem("memory-best", JSON.stringify(next));
         }
-        // Save to database
         saveScore(score, moves, seconds, difficulty);
         fetchLeaderboard(difficulty);
       }
@@ -175,11 +171,9 @@ export function MemoryGame({ onBack }: Props) {
       lockRef.current = true;
       const [a, b] = newFlipped;
       const cardA = cards.find(c => c.id === a)!;
-      const cardB = cards.find(c => c.id === b)!; // b is `id` so use card
-      const emojiB = card.emoji; // current card
+      const emojiB = card.emoji;
 
       if (cardA.emoji === emojiB) {
-        // Match!
         setTimeout(() => {
           setCards(prev => prev.map(c =>
             c.id === a || c.id === b ? { ...c, matched: true, flipped: true } : c
@@ -189,7 +183,6 @@ export function MemoryGame({ onBack }: Props) {
           lockRef.current = false;
         }, 400);
       } else {
-        // No match
         setTimeout(() => {
           setCards(prev => prev.map(c =>
             c.id === a || c.id === b ? { ...c, flipped: false } : c
@@ -204,14 +197,14 @@ export function MemoryGame({ onBack }: Props) {
   // Leaderboard view
   if (showLeaderboard) {
     return (
-      <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
+      <div className="flex-1 overflow-y-auto">
         <div className="container px-4 py-8 max-w-lg mx-auto space-y-4">
           <Button variant="ghost" size="sm" onClick={() => setShowLeaderboard(false)} className="text-muted-foreground">
             <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka
           </Button>
           <div className="text-center space-y-2">
             <Medal className="w-10 h-10 mx-auto text-primary" />
-            <h1 className="font-display font-bold text-2xl">Topplista</h1>
+            <h2 className="font-display font-bold text-2xl">Topplista</h2>
           </div>
           <div className="flex gap-1 justify-center">
             {(["easy", "medium", "hard"] as Difficulty[]).map(d => (
@@ -227,8 +220,8 @@ export function MemoryGame({ onBack }: Props) {
             ))}
           </div>
           <div className="rounded-xl border-2 border-border bg-card overflow-hidden">
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-2">
-              <span className="font-display font-bold text-white text-sm">{DIFFICULTY_CONFIG[leaderboardDiff].label}</span>
+            <div className="bg-gradient-to-r from-primary/80 to-primary px-4 py-2">
+              <span className="font-display font-bold text-primary-foreground text-sm">{DIFFICULTY_CONFIG[leaderboardDiff].label}</span>
             </div>
             <ScrollArea className="max-h-96">
               <div className="divide-y divide-border">
@@ -257,20 +250,20 @@ export function MemoryGame({ onBack }: Props) {
   // Difficulty selection screen
   if (!difficulty) {
     return (
-      <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
+      <div className="flex-1 overflow-y-auto">
         <div className="container px-4 py-8 max-w-lg mx-auto space-y-6">
           <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
             <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka till spel
           </Button>
 
           <div className="text-center space-y-3">
-            <div className="text-6xl mb-2" style={{ imageRendering: "pixelated" }}>🧠</div>
-            <h1 className="font-display font-bold text-3xl">Memory</h1>
+            <div className="text-6xl mb-2">🧠</div>
+            <h2 className="font-display font-bold text-3xl">Memory</h2>
             <p className="text-muted-foreground text-sm">Hitta alla matchande par så snabbt du kan!</p>
           </div>
 
           <div className="space-y-3">
-            <h2 className="font-display font-bold text-center text-sm text-muted-foreground uppercase tracking-wider">Välj svårighetsgrad</h2>
+            <h3 className="font-display font-bold text-center text-sm text-muted-foreground uppercase tracking-wider">Välj svårighetsgrad</h3>
             {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, cfg]) => (
               <button
                 key={key}
@@ -293,7 +286,6 @@ export function MemoryGame({ onBack }: Props) {
             ))}
           </div>
 
-          {/* Leaderboard button */}
           <Button
             variant="outline"
             className="w-full font-display gap-2"
@@ -302,16 +294,13 @@ export function MemoryGame({ onBack }: Props) {
             <Medal className="w-4 h-4" /> Visa topplista
           </Button>
 
-          {/* Rules */}
-          <div className="rounded-xl border border-border bg-card/50 p-4 space-y-2">
-            <h3 className="font-display font-bold text-sm flex items-center gap-1"><Trophy className="w-3 h-3 text-primary" /> Poängsystem</h3>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Grundpoäng baserat på antal par</li>
-              <li>• Färre drag = högre poäng</li>
-              <li>• Snabbare tid = högre poäng</li>
-              <li>• Tävla mot andra på topplistan!</li>
-            </ul>
-          </div>
+          {!username && (
+            <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
+              <p className="text-xs text-muted-foreground">
+                Lägg till <code className="bg-muted px-1 rounded font-mono text-foreground">?usr=DittNamn</code> i URL:en för att spara poäng på topplistan
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -325,10 +314,10 @@ export function MemoryGame({ onBack }: Props) {
     const best = bestScores[difficulty] || 0;
     const isNewBest = score >= best;
     return (
-      <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
+      <div className="flex-1 overflow-y-auto">
         <div className="container px-4 py-8 max-w-lg mx-auto space-y-6 text-center">
           <div className="text-6xl mb-2">🎉</div>
-          <h1 className="font-display font-bold text-3xl">Grattis!</h1>
+          <h2 className="font-display font-bold text-3xl">Grattis!</h2>
           <p className="text-muted-foreground">Du hittade alla {totalPairs} par!</p>
 
           <div className="grid grid-cols-3 gap-3">
@@ -355,6 +344,10 @@ export function MemoryGame({ onBack }: Props) {
             </div>
           )}
 
+          {!username && (
+            <p className="text-xs text-muted-foreground">Poängen sparades inte — lägg till ?usr=DittNamn i URL:en</p>
+          )}
+
           <div className="flex flex-wrap gap-3 justify-center">
             <Button variant="outline" onClick={() => startGame(difficulty)} className="font-display gap-1">
               <RotateCcw className="w-4 h-4" /> Spela igen
@@ -376,9 +369,8 @@ export function MemoryGame({ onBack }: Props) {
 
   // Game board
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
+    <div className="flex-1 overflow-y-auto">
       <div className="container px-4 py-4 max-w-2xl mx-auto space-y-4">
-        {/* Top bar */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
             <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka
@@ -397,7 +389,6 @@ export function MemoryGame({ onBack }: Props) {
           </Button>
         </div>
 
-        {/* Board */}
         <div
           className="grid gap-2 mx-auto"
           style={{
@@ -416,22 +407,20 @@ export function MemoryGame({ onBack }: Props) {
                   ? "border-primary/50 bg-primary/10 scale-95 opacity-60"
                   : card.flipped
                     ? "border-primary bg-card rotate-0 scale-105"
-                    : "border-border bg-gradient-to-br from-orange-500/80 to-orange-600/80 hover:from-orange-400/80 hover:to-orange-500/80 cursor-pointer hover:scale-105"
+                    : "border-border bg-gradient-to-br from-primary/60 to-primary/80 hover:from-primary/50 hover:to-primary/70 cursor-pointer hover:scale-105"
                 }
               `}
               disabled={card.matched}
-              style={{ imageRendering: "auto" }}
             >
               {card.flipped || card.matched ? (
-                <span className="block" style={{ imageRendering: "auto" }}>{card.emoji}</span>
+                <span className="block">{card.emoji}</span>
               ) : (
-                <span className="text-white/30 text-lg font-display">?</span>
+                <span className="text-primary-foreground/30 text-lg font-display">?</span>
               )}
             </button>
           ))}
         </div>
 
-        {/* Score preview */}
         <div className="text-center text-xs text-muted-foreground font-display">
           Aktuell poäng: <span className="text-primary font-bold">{score}p</span>
         </div>
