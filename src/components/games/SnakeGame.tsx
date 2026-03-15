@@ -305,36 +305,26 @@ export function SnakeGame({ onBack, username }: Props) {
   if (gameState === "leaderboard") {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="container px-4 py-8 max-w-lg mx-auto space-y-4">
-          <Button variant="ghost" size="sm" onClick={() => setGameState("menu")} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka
-          </Button>
-          <div className="text-center space-y-2">
-            <Medal className="w-10 h-10 mx-auto text-primary" />
-            <h2 className="font-display font-bold text-2xl">Snake Topplista</h2>
-          </div>
-          <div className="rounded-xl border-2 border-border bg-card overflow-hidden">
-            <div className="bg-gradient-to-r from-primary/80 to-primary px-4 py-2">
-              <span className="font-display font-bold text-primary-foreground text-sm">🐍 Bästa spelare</span>
-            </div>
-            <ScrollArea className="max-h-96">
-              <div className="divide-y divide-border">
-                {leaderboard.length === 0 ? (
-                  <p className="text-center text-muted-foreground text-sm py-8">Inga poäng ännu — bli den första!</p>
-                ) : leaderboard.map((entry, i) => (
-                  <div key={entry.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <span className="w-6 text-center font-display font-bold text-sm">
-                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-display font-bold text-sm truncate block">{entry.username}</span>
-                      <span className="text-xs text-muted-foreground">{entry.apples_eaten} äpplen · {formatTime(entry.time_seconds)}</span>
-                    </div>
-                    <span className="font-display font-bold text-primary text-sm">{entry.score}p</span>
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+          <button onClick={() => setGameState("menu")} className="retro-btn text-xs">← Tillbaka</button>
+          <div className="retro-panel">
+            <div className="retro-panel-header">🏆 TOPPLISTA — SNAKE</div>
+            <div className="max-h-96 overflow-y-auto">
+              {leaderboard.length === 0 ? (
+                <p className="text-center text-muted-foreground text-xs py-8">Inga poäng ännu!</p>
+              ) : leaderboard.map((entry, i) => (
+                <div key={entry.id} className="retro-table-row">
+                  <span className="w-8 text-center font-bold text-xs">
+                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-bold text-xs truncate block">{entry.username}</span>
+                    <span className="text-[10px] text-muted-foreground">{entry.apples_eaten} äpplen · {formatTime(entry.time_seconds)}</span>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                  <span className="font-bold text-primary text-xs">{entry.score}p</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
