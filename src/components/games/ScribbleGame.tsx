@@ -391,7 +391,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                   </div>
                 ))}
               </div>
-              {winner && winner.user_id !== user?.id && (
+              {winner && winner.user_id !== guestId && (
                 <GameOverVibes
                   winnerId={winner.user_id}
                   winnerName={winner.username}
