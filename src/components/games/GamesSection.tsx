@@ -3,6 +3,7 @@ import { ScribbleLobbyList } from "./ScribbleLobbyList";
 import { ScribbleGame } from "./ScribbleGame";
 import { MemoryGame } from "./MemoryGame";
 import { SnakeGame } from "./SnakeGame";
+import { useGuestId } from "@/hooks/useGuestId";
 
 const GAMES = [
   {
@@ -35,6 +36,7 @@ interface GamesSectionProps {
 export function GamesSection({ username }: GamesSectionProps) {
   const [activeLobbyId, setActiveLobbyId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "scribble-lobbies" | "memory" | "snake">("list");
+  const guestId = useGuestId();
 
   if (view === "memory") {
     return <MemoryGame onBack={() => setView("list")} username={username} />;
@@ -45,7 +47,7 @@ export function GamesSection({ username }: GamesSectionProps) {
   }
 
   if (activeLobbyId) {
-    return <ScribbleGame lobbyId={activeLobbyId} onLeave={() => { setActiveLobbyId(null); setView("scribble-lobbies"); }} />;
+    return <ScribbleGame lobbyId={activeLobbyId} onLeave={() => { setActiveLobbyId(null); setView("scribble-lobbies"); }} guestId={guestId} guestUsername={username} />;
   }
 
   if (view === "scribble-lobbies") {
@@ -56,7 +58,7 @@ export function GamesSection({ username }: GamesSectionProps) {
             ← Tillbaka
           </button>
         </div>
-        <ScribbleLobbyList onJoinLobby={(id) => setActiveLobbyId(id)} />
+        <ScribbleLobbyList onJoinLobby={(id) => setActiveLobbyId(id)} guestId={guestId} guestUsername={username} />
       </div>
     );
   }

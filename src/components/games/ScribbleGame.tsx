@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useScribbleGame } from "@/hooks/useScribble";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,6 +20,8 @@ interface DrawPoint {
 interface ScribbleGameProps {
   lobbyId: string;
   onLeave: () => void;
+  guestId: string;
+  guestUsername: string | null;
 }
 
 const COLORS = ["#000000", "#ff0000", "#0066ff", "#00cc44", "#ff9900", "#9933ff", "#ff69b4", "#ffffff"];
@@ -37,9 +38,8 @@ const WORD_LIST = [
   "fotboll", "skateboard", "glass", "tårta", "clown", "dinosaurie",
 ];
 
-export function ScribbleGame({ lobbyId, onLeave }: ScribbleGameProps) {
-  const { lobby, players, guesses, joinLobby, submitGuess, leaveLobby } = useScribbleGame(lobbyId);
-  const { user } = useAuth();
+export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: ScribbleGameProps) {
+  const { lobby, players, guesses, joinLobby, submitGuess, leaveLobby } = useScribbleGame(lobbyId, guestId, guestUsername);
   const { toast } = useToast();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -63,8 +63,8 @@ export function ScribbleGame({ lobbyId, onLeave }: ScribbleGameProps) {
   // Ink particle system
   const { onDrawMove, resetLastPos } = useInkParticles(containerRef);
 
-  const isDrawer = lobby?.current_drawer_id === user?.id;
-  const isCreator = lobby?.creator_id === user?.id;
+  const isDrawer = lobby?.current_drawer_id === guestId;
+  const isCreator = lobby?.creator_id === guestId;
   const maxRounds = players.length > 0 ? players.length * 2 : 4;
 
   // Join lobby on mount
@@ -128,7 +128,7 @@ export function ScribbleGame({ lobbyId, onLeave }: ScribbleGameProps) {
     const channel = supabase.channel(`scribble-draw-${lobbyId}`);
     
     channel.on('broadcast', { event: 'draw' }, ({ payload }) => {
-      if (payload.drawer_id === user?.id) return;
+      if (payload.drawer_id === guestId) return;
       drawStroke(payload.points);
     }).on('broadcast', { event: 'clear' }, () => {
       clearCanvas();
@@ -136,7 +136,7 @@ export function ScribbleGame({ lobbyId, onLeave }: ScribbleGameProps) {
 
     broadcastChannel.current = channel;
     return () => { supabase.removeChannel(channel); };
-  }, [lobbyId, user?.id]); // eslint-disable-line
+  }, [lobbyId, guestId]); // eslint-disable-line
 
   const drawStroke = useCallback((points: DrawPoint[]) => {
     const canvas = canvasRef.current;
@@ -223,7 +223,7 @@ export function ScribbleGame({ lobbyId, onLeave }: ScribbleGameProps) {
       broadcastChannel.current?.send({
         type: 'broadcast',
         event: 'draw',
-        payload: { points: currentAction, drawer_id: user?.id },
+        payload: { points: currentAction, drawer_id: guestId },
       });
     }
     setCurrentAction([]);
@@ -268,7 +268,7 @@ export function ScribbleGame({ lobbyId, onLeave }: ScribbleGameProps) {
     const nextDrawer = players[nextIdx];
 
     // If next drawer is me, show word picker
-    if (nextDrawer.user_id === user?.id) {
+    if (nextDrawer.user_id === guestId) {
       const choices = [];
       const used = new Set<string>();
       while (choices.length < 3) {
@@ -315,7 +315,7 @@ export function ScribbleGame({ lobbyId, onLeave }: ScribbleGameProps) {
     await supabase.from('scribble_lobbies').update({
       status: 'playing',
       current_word: word,
-      current_drawer_id: user?.id,
+      current_drawer_id: guestId,
       round_number: 1,
     }).eq('id', lobbyId);
     clearCanvas();
@@ -390,7 +390,7 @@ export function ScribbleGame({ lobbyId, onLeave }: ScribbleGameProps) {
                   </div>
                 ))}
               </div>
-              {winner && winner.user_id !== user?.id && (
+              {winner && winner.user_id !== guestId && (
                 <GameOverVibes
                   winnerId={winner.user_id}
                   winnerName={winner.username}

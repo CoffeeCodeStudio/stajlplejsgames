@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
 
 export interface ScribbleLobby {
@@ -40,26 +38,14 @@ export interface ScribbleGuess {
 
 /**
  * Lists and creates Scribble game lobbies.
- *
- * Automatically cleans up finished or stale (>5 min inactive) lobbies,
- * fetches player counts, and subscribes to real-time lobby changes.
- *
- * @returns `lobbies` array, `loading`, `createLobby`, and `refetch`.
+ * Works for both authenticated and guest users.
  */
-export function useScribbleLobbies() {
+export function useScribbleLobbies(guestId: string, guestUsername: string | null) {
   const [lobbies, setLobbies] = useState<ScribbleLobby[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const { profile } = useProfile();
   const { toast } = useToast();
 
   const fetchLobbies = useCallback(async () => {
-    if (!user) {
-      setLoading(false);
-      setLobbies([]);
-      return;
-    }
-
     try {
       const { data, error } = await supabase
         .from('scribble_lobbies')
@@ -93,12 +79,11 @@ export function useScribbleLobbies() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     fetchLobbies();
 
-    // Timeout fallback: if still loading after 5s, force stop
     const timeout = setTimeout(() => {
       setLoading(prev => {
         if (prev) console.warn('Lobby fetch timed out after 5s');
@@ -122,12 +107,12 @@ export function useScribbleLobbies() {
   }, [fetchLobbies]);
 
   const createLobby = async (title: string, description: string) => {
-    if (!user || !profile) return null;
+    const username = guestUsername || 'Gäst';
     const { data, error } = await supabase
       .from('scribble_lobbies')
       .insert({
-        creator_id: user.id,
-        creator_username: profile.username,
+        creator_id: guestId,
+        creator_username: username,
         title,
         description,
       })
@@ -142,9 +127,9 @@ export function useScribbleLobbies() {
     // Auto-join
     await supabase.from('scribble_players').insert({
       lobby_id: data.id,
-      user_id: user.id,
-      username: profile.username,
-      avatar_url: profile.avatar_url,
+      user_id: guestId,
+      username,
+      avatar_url: null,
     });
 
     return data;
@@ -155,23 +140,18 @@ export function useScribbleLobbies() {
 
 /**
  * Manages the state of an active Scribble game session.
- *
- * Fetches lobby details, players, and guesses with real-time subscriptions.
- * Sends a heartbeat every 60 s to keep the lobby alive.
- *
- * @param lobbyId - The lobby to join, or `null` if none is selected.
- * @returns Lobby state, players, guesses, and action callbacks.
+ * Works for both authenticated and guest users.
  */
-export function useScribbleGame(lobbyId: string | null) {
+export function useScribbleGame(lobbyId: string | null, guestId: string, guestUsername: string | null) {
   const [players, setPlayers] = useState<ScribblePlayer[]>([]);
   const [guesses, setGuesses] = useState<ScribbleGuess[]>([]);
   const [lobby, setLobby] = useState<ScribbleLobby | null>(null);
-  const { user } = useAuth();
-  const { profile } = useProfile();
   const { toast } = useToast();
 
+  const username = guestUsername || 'Gäst';
+
   const fetchGame = useCallback(async () => {
-    if (!lobbyId || !user) return;
+    if (!lobbyId) return;
 
     const [lobbyRes, playersRes, guessesRes] = await Promise.all([
       supabase.from('scribble_lobbies').select('*').eq('id', lobbyId).single(),
@@ -182,7 +162,7 @@ export function useScribbleGame(lobbyId: string | null) {
     if (lobbyRes.data) setLobby(lobbyRes.data);
     if (playersRes.data) setPlayers(playersRes.data);
     if (guessesRes.data) setGuesses(guessesRes.data);
-  }, [lobbyId, user]);
+  }, [lobbyId]);
 
   useEffect(() => {
     fetchGame();
@@ -199,9 +179,9 @@ export function useScribbleGame(lobbyId: string | null) {
     return () => { supabase.removeChannel(channel); };
   }, [fetchGame, lobbyId]);
 
-  // Heartbeat: update lobby's updated_at every 60s to keep it alive
+  // Heartbeat
   useEffect(() => {
-    if (!lobbyId || !user) return;
+    if (!lobbyId) return;
     const interval = setInterval(async () => {
       await supabase
         .from('scribble_lobbies')
@@ -209,18 +189,18 @@ export function useScribbleGame(lobbyId: string | null) {
         .eq('id', lobbyId);
     }, 60_000);
     return () => clearInterval(interval);
-  }, [lobbyId, user]);
+  }, [lobbyId]);
 
   const joinLobby = async () => {
-    if (!lobbyId || !user || !profile) return;
-    const existing = players.find(p => p.user_id === user.id);
+    if (!lobbyId) return;
+    const existing = players.find(p => p.user_id === guestId);
     if (existing) return;
 
     const { error } = await supabase.from('scribble_players').insert({
       lobby_id: lobbyId,
-      user_id: user.id,
-      username: profile.username,
-      avatar_url: profile.avatar_url,
+      user_id: guestId,
+      username,
+      avatar_url: null,
     });
     if (error) {
       toast({ title: 'Kunde inte gå med', description: error.message, variant: 'destructive' });
@@ -228,34 +208,33 @@ export function useScribbleGame(lobbyId: string | null) {
   };
 
   const submitGuess = async (guess: string) => {
-    if (!lobbyId || !user || !profile) return;
+    if (!lobbyId) return;
     const isCorrect = lobby?.current_word
       ? guess.trim().toLowerCase() === lobby.current_word.trim().toLowerCase()
       : false;
 
     await supabase.from('scribble_guesses').insert({
       lobby_id: lobbyId,
-      user_id: user.id,
-      username: profile.username,
+      user_id: guestId,
+      username,
       guess,
       is_correct: isCorrect,
     });
 
     if (isCorrect) {
-      // Award points
       await supabase.from('scribble_players')
-        .update({ score: (players.find(p => p.user_id === user.id)?.score || 0) + 10 })
+        .update({ score: (players.find(p => p.user_id === guestId)?.score || 0) + 10 })
         .eq('lobby_id', lobbyId)
-        .eq('user_id', user.id);
+        .eq('user_id', guestId);
     }
 
     return isCorrect;
   };
 
   const leaveLobby = async () => {
-    if (!lobbyId || !user) return;
-    await supabase.from('scribble_players').delete().eq('lobby_id', lobbyId).eq('user_id', user.id);
+    if (!lobbyId) return;
+    await supabase.from('scribble_players').delete().eq('lobby_id', lobbyId).eq('user_id', guestId);
   };
 
-  return { lobby, players, guesses, joinLobby, submitGuess, leaveLobby };
+  return { lobby, players, guesses, joinLobby, submitGuess, leaveLobby, visitorId: guestId };
 }
