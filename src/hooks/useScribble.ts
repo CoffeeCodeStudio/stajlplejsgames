@@ -98,14 +98,27 @@ export function useScribbleLobbies() {
   useEffect(() => {
     fetchLobbies();
 
+    // Timeout fallback: if still loading after 5s, force stop
+    const timeout = setTimeout(() => {
+      setLoading(prev => {
+        if (prev) console.warn('Lobby fetch timed out after 5s');
+        return false;
+      });
+    }, 5000);
+
     const channel = supabase
       .channel('scribble-lobbies')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'scribble_lobbies' }, () => {
         fetchLobbies();
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Scribble realtime subscription error:', err);
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      clearTimeout(timeout);
+      supabase.removeChannel(channel);
+    };
   }, [fetchLobbies]);
 
   const createLobby = async (title: string, description: string) => {
