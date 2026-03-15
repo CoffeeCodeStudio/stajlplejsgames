@@ -334,7 +334,7 @@ export function SnakeGame({ onBack, username }: Props) {
     return (
       <div className="flex-1 overflow-y-auto">
         <div className="px-3 py-4 space-y-3">
-          <button onClick={() => setGameState("menu")} className="retro-btn text-[10px]">← Tillbaka</button>
+          <button onClick={() => setGameState("menu")} className="retro-btn text-[10px]">← Tillbaka till spel</button>
           <div className="retro-panel">
             <div className="retro-panel-header">🏆 TOPPLISTA — SNAKE</div>
             <div className="max-h-96 overflow-y-auto">
