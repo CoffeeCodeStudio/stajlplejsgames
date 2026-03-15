@@ -3,8 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, RotateCcw, Trophy, Clock, Medal, Apple, ArrowUp, ArrowDown, ArrowRight as ArrowRightIcon, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 18;
@@ -44,11 +42,10 @@ function getRandomPosition(snake: Position[]): Position {
 
 interface Props {
   onBack: () => void;
+  username: string | null;
 }
 
-export function SnakeGame({ onBack }: Props) {
-  const { user } = useAuth();
-  const { profile } = useProfile();
+export function SnakeGame({ onBack, username }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -80,17 +77,17 @@ export function SnakeGame({ onBack }: Props) {
   }, []);
 
   const saveScore = useCallback(async (finalScore: number, apples: number, timeSec: number) => {
-    if (!user || !profile || scoreSaved) return;
+    if (!username || scoreSaved) return;
     setScoreSaved(true);
     await supabase.from('snake_highscores').insert({
-      user_id: user.id,
-      username: profile.username,
-      avatar_url: profile.avatar_url,
+      user_id: '00000000-0000-0000-0000-000000000000',
+      username: username,
+      avatar_url: null,
       score: finalScore,
       apples_eaten: apples,
       time_seconds: timeSec,
     });
-  }, [user, profile, scoreSaved]);
+  }, [username, scoreSaved]);
 
   const drawGame = useCallback(() => {
     const canvas = canvasRef.current;
@@ -101,11 +98,9 @@ export function SnakeGame({ onBack }: Props) {
     const w = GRID_SIZE * CELL_SIZE;
     const h = GRID_SIZE * CELL_SIZE;
 
-    // Background - dark retro grid
     ctx.fillStyle = "#1a1a2e";
     ctx.fillRect(0, 0, w, h);
 
-    // Grid lines
     ctx.strokeStyle = "#16213e";
     ctx.lineWidth = 0.5;
     for (let i = 0; i <= GRID_SIZE; i++) {
@@ -119,28 +114,15 @@ export function SnakeGame({ onBack }: Props) {
       ctx.stroke();
     }
 
-    // Apple
     const apple = appleRef.current;
     ctx.fillStyle = "#ff3b3b";
     ctx.shadowColor = "#ff3b3b";
     ctx.shadowBlur = 8;
-    ctx.fillRect(
-      apple.x * CELL_SIZE + 2,
-      apple.y * CELL_SIZE + 2,
-      CELL_SIZE - 4,
-      CELL_SIZE - 4
-    );
-    // Apple highlight
+    ctx.fillRect(apple.x * CELL_SIZE + 2, apple.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
     ctx.fillStyle = "#ff6b6b";
-    ctx.fillRect(
-      apple.x * CELL_SIZE + 3,
-      apple.y * CELL_SIZE + 3,
-      4,
-      4
-    );
+    ctx.fillRect(apple.x * CELL_SIZE + 3, apple.y * CELL_SIZE + 3, 4, 4);
     ctx.shadowBlur = 0;
 
-    // Snake
     const snake = snakeRef.current;
     snake.forEach((segment, i) => {
       const isHead = i === 0;
@@ -155,14 +137,8 @@ export function SnakeGame({ onBack }: Props) {
         ctx.shadowBlur = 0;
       }
 
-      ctx.fillRect(
-        segment.x * CELL_SIZE + 1,
-        segment.y * CELL_SIZE + 1,
-        CELL_SIZE - 2,
-        CELL_SIZE - 2
-      );
+      ctx.fillRect(segment.x * CELL_SIZE + 1, segment.y * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
 
-      // Pixel eyes on head
       if (isHead) {
         ctx.shadowBlur = 0;
         ctx.fillStyle = "#000";
@@ -215,13 +191,11 @@ export function SnakeGame({ onBack }: Props) {
     if (dir === "LEFT") head.x -= 1;
     if (dir === "RIGHT") head.x += 1;
 
-    // Wall collision
     if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
       endGame();
       return;
     }
 
-    // Self collision
     if (snake.some(s => s.x === head.x && s.y === head.y)) {
       endGame();
       return;
@@ -231,14 +205,12 @@ export function SnakeGame({ onBack }: Props) {
     const apple = appleRef.current;
 
     if (head.x === apple.x && head.y === apple.y) {
-      // Ate apple
       applesRef.current += 1;
       scoreRef.current += 10 + Math.floor(applesRef.current / 5) * 5;
       setScore(scoreRef.current);
       setApplesEaten(applesRef.current);
       appleRef.current = getRandomPosition(newSnake);
 
-      // Speed up
       speedRef.current = Math.max(MIN_SPEED, speedRef.current - SPEED_INCREASE);
       if (gameLoopRef.current) clearInterval(gameLoopRef.current);
       gameLoopRef.current = setInterval(() => {
@@ -267,7 +239,6 @@ export function SnakeGame({ onBack }: Props) {
     setScoreSaved(false);
     setGameState("playing");
 
-    // Need to wait for canvas to mount
     setTimeout(() => {
       drawGame();
       if (gameLoopRef.current) clearInterval(gameLoopRef.current);
@@ -275,7 +246,6 @@ export function SnakeGame({ onBack }: Props) {
     }, 50);
   }, [drawGame, tick]);
 
-  // Timer
   useEffect(() => {
     if (gameState === "playing") {
       timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
@@ -283,34 +253,25 @@ export function SnakeGame({ onBack }: Props) {
     }
   }, [gameState]);
 
-  // Keyboard controls
   useEffect(() => {
     if (gameState !== "playing") return;
 
     const handleKey = (e: KeyboardEvent) => {
       const dir = directionRef.current;
       switch (e.key) {
-        case "ArrowUp":
-        case "w":
-        case "W":
+        case "ArrowUp": case "w": case "W":
           e.preventDefault();
           if (dir !== "DOWN") nextDirectionRef.current = "UP";
           break;
-        case "ArrowDown":
-        case "s":
-        case "S":
+        case "ArrowDown": case "s": case "S":
           e.preventDefault();
           if (dir !== "UP") nextDirectionRef.current = "DOWN";
           break;
-        case "ArrowLeft":
-        case "a":
-        case "A":
+        case "ArrowLeft": case "a": case "A":
           e.preventDefault();
           if (dir !== "RIGHT") nextDirectionRef.current = "LEFT";
           break;
-        case "ArrowRight":
-        case "d":
-        case "D":
+        case "ArrowRight": case "d": case "D":
           e.preventDefault();
           if (dir !== "LEFT") nextDirectionRef.current = "RIGHT";
           break;
@@ -321,7 +282,6 @@ export function SnakeGame({ onBack }: Props) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [gameState]);
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (gameLoopRef.current) clearInterval(gameLoopRef.current);
@@ -329,7 +289,6 @@ export function SnakeGame({ onBack }: Props) {
     };
   }, []);
 
-  // Touch controls handler
   const handleDirection = (dir: Direction) => {
     const current = directionRef.current;
     if (
@@ -345,18 +304,18 @@ export function SnakeGame({ onBack }: Props) {
   // Leaderboard view
   if (gameState === "leaderboard") {
     return (
-      <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
+      <div className="flex-1 overflow-y-auto">
         <div className="container px-4 py-8 max-w-lg mx-auto space-y-4">
           <Button variant="ghost" size="sm" onClick={() => setGameState("menu")} className="text-muted-foreground">
             <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka
           </Button>
           <div className="text-center space-y-2">
             <Medal className="w-10 h-10 mx-auto text-primary" />
-            <h1 className="font-display font-bold text-2xl">Snake Topplista</h1>
+            <h2 className="font-display font-bold text-2xl">Snake Topplista</h2>
           </div>
           <div className="rounded-xl border-2 border-border bg-card overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-4 py-2">
-              <span className="font-display font-bold text-white text-sm">🐍 Bästa spelare</span>
+            <div className="bg-gradient-to-r from-primary/80 to-primary px-4 py-2">
+              <span className="font-display font-bold text-primary-foreground text-sm">🐍 Bästa spelare</span>
             </div>
             <ScrollArea className="max-h-96">
               <div className="divide-y divide-border">
@@ -371,7 +330,7 @@ export function SnakeGame({ onBack }: Props) {
                       <span className="font-display font-bold text-sm truncate block">{entry.username}</span>
                       <span className="text-xs text-muted-foreground">{entry.apples_eaten} äpplen · {formatTime(entry.time_seconds)}</span>
                     </div>
-                    <span className="font-display font-bold text-emerald-400 text-sm">{entry.score}p</span>
+                    <span className="font-display font-bold text-primary text-sm">{entry.score}p</span>
                   </div>
                 ))}
               </div>
@@ -385,22 +344,22 @@ export function SnakeGame({ onBack }: Props) {
   // Menu
   if (gameState === "menu") {
     return (
-      <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
+      <div className="flex-1 overflow-y-auto">
         <div className="container px-4 py-8 max-w-lg mx-auto space-y-6">
           <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
             <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka till spel
           </Button>
 
           <div className="text-center space-y-3">
-            <div className="text-6xl mb-2" style={{ imageRendering: "pixelated" }}>🐍</div>
-            <h1 className="font-display font-bold text-3xl text-emerald-400">Snake</h1>
+            <div className="text-6xl mb-2">🐍</div>
+            <h2 className="font-display font-bold text-3xl">Snake</h2>
             <p className="text-muted-foreground text-sm">Styr ormen, ät äpplen och väx dig längre!</p>
           </div>
 
           <div className="space-y-3">
             <Button
               onClick={startGame}
-              className="w-full font-display text-lg py-6 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white"
+              className="w-full font-display text-lg py-6"
               size="lg"
             >
               🎮 Starta spelet
@@ -418,18 +377,25 @@ export function SnakeGame({ onBack }: Props) {
           {highScore > 0 && (
             <div className="text-center">
               <span className="text-xs text-muted-foreground">Ditt bästa: </span>
-              <span className="font-display font-bold text-emerald-400">{highScore}p</span>
+              <span className="font-display font-bold text-primary">{highScore}p</span>
+            </div>
+          )}
+
+          {!username && (
+            <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
+              <p className="text-xs text-muted-foreground">
+                Lägg till <code className="bg-muted px-1 rounded font-mono text-foreground">?usr=DittNamn</code> i URL:en för att spara poäng på topplistan
+              </p>
             </div>
           )}
 
           <div className="rounded-xl border border-border bg-card/50 p-4 space-y-2">
-            <h3 className="font-display font-bold text-sm flex items-center gap-1"><Trophy className="w-3 h-3 text-emerald-400" /> Kontroller</h3>
+            <h3 className="font-display font-bold text-sm flex items-center gap-1"><Trophy className="w-3 h-3 text-primary" /> Kontroller</h3>
             <ul className="text-xs text-muted-foreground space-y-1">
               <li>• Piltangenter eller WASD för att styra</li>
               <li>• Ät 🔴 äpplen för att växa och få poäng</li>
               <li>• Undvik väggar och din egen svans</li>
               <li>• Ju fler äpplen, desto snabbare!</li>
-              <li>• Mobilknappar visas på touchskärmar</li>
             </ul>
           </div>
         </div>
@@ -441,19 +407,19 @@ export function SnakeGame({ onBack }: Props) {
   if (gameState === "gameover") {
     const isNewBest = score >= highScore;
     return (
-      <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
+      <div className="flex-1 overflow-y-auto">
         <div className="container px-4 py-8 max-w-lg mx-auto space-y-6 text-center">
           <div className="text-6xl mb-2">💀</div>
-          <h1 className="font-display font-bold text-3xl text-red-400">Game Over!</h1>
+          <h2 className="font-display font-bold text-3xl text-destructive">Game Over!</h2>
 
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-xl border border-border bg-card p-3">
-              <Trophy className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
-              <div className="font-display font-bold text-xl text-emerald-400">{score}p</div>
+              <Trophy className="w-5 h-5 text-primary mx-auto mb-1" />
+              <div className="font-display font-bold text-xl text-primary">{score}p</div>
               <div className="text-xs text-muted-foreground">Poäng</div>
             </div>
             <div className="rounded-xl border border-border bg-card p-3">
-              <Apple className="w-5 h-5 text-red-400 mx-auto mb-1" />
+              <Apple className="w-5 h-5 text-destructive mx-auto mb-1" />
               <div className="font-display font-bold text-xl">{applesEaten}</div>
               <div className="text-xs text-muted-foreground">Äpplen</div>
             </div>
@@ -465,13 +431,17 @@ export function SnakeGame({ onBack }: Props) {
           </div>
 
           {isNewBest && score > 0 && (
-            <div className="text-sm font-display font-bold text-emerald-400 animate-pulse">
+            <div className="text-sm font-display font-bold text-primary animate-pulse">
               ⭐ Nytt rekord! ⭐
             </div>
           )}
 
+          {!username && (
+            <p className="text-xs text-muted-foreground">Poängen sparades inte — lägg till ?usr=DittNamn i URL:en</p>
+          )}
+
           <div className="flex flex-wrap gap-3 justify-center">
-            <Button onClick={startGame} className="font-display gap-1 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600">
+            <Button onClick={startGame} className="font-display gap-1">
               <RotateCcw className="w-4 h-4" /> Spela igen
             </Button>
             <Button variant="outline" onClick={() => { setGameState("leaderboard"); fetchLeaderboard(); }} className="font-display gap-1">
@@ -490,9 +460,8 @@ export function SnakeGame({ onBack }: Props) {
   const canvasSize = GRID_SIZE * CELL_SIZE;
 
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
+    <div className="flex-1 overflow-y-auto">
       <div className="container px-4 py-4 max-w-2xl mx-auto space-y-3">
-        {/* Top bar */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={() => { endGame(); setGameState("menu"); }} className="text-muted-foreground">
             <ArrowLeft className="w-4 h-4 mr-1" /> Avsluta
@@ -501,17 +470,16 @@ export function SnakeGame({ onBack }: Props) {
             <span className="flex items-center gap-1 text-muted-foreground">
               <Clock className="w-3.5 h-3.5" /> {formatTime(seconds)}
             </span>
-            <span className="flex items-center gap-1 text-red-400">
+            <span className="flex items-center gap-1 text-destructive">
               <Apple className="w-3.5 h-3.5" /> {applesEaten}
             </span>
-            <span className="text-emerald-400 font-bold">{score}p</span>
+            <span className="text-primary font-bold">{score}p</span>
           </div>
         </div>
 
-        {/* Canvas */}
         <div className="flex justify-center">
           <div
-            className="rounded-lg border-2 border-emerald-800/50 overflow-hidden shadow-lg shadow-emerald-900/20"
+            className="rounded-lg border-2 border-border overflow-hidden shadow-lg"
             style={{ width: canvasSize, height: canvasSize }}
           >
             <canvas
@@ -527,41 +495,25 @@ export function SnakeGame({ onBack }: Props) {
         <div className="flex justify-center md:hidden">
           <div className="grid grid-cols-3 gap-1 w-36">
             <div />
-            <Button
-              variant="outline"
-              size="sm"
-              className="aspect-square p-0 border-emerald-800/50 active:bg-emerald-900/50"
+            <Button variant="outline" size="sm" className="aspect-square p-0"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("UP"); }}
-              onClick={() => handleDirection("UP")}
-            >
+              onClick={() => handleDirection("UP")}>
               <ArrowUp className="w-5 h-5" />
             </Button>
             <div />
-            <Button
-              variant="outline"
-              size="sm"
-              className="aspect-square p-0 border-emerald-800/50 active:bg-emerald-900/50"
+            <Button variant="outline" size="sm" className="aspect-square p-0"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("LEFT"); }}
-              onClick={() => handleDirection("LEFT")}
-            >
+              onClick={() => handleDirection("LEFT")}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="aspect-square p-0 border-emerald-800/50 active:bg-emerald-900/50"
+            <Button variant="outline" size="sm" className="aspect-square p-0"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("DOWN"); }}
-              onClick={() => handleDirection("DOWN")}
-            >
+              onClick={() => handleDirection("DOWN")}>
               <ArrowDown className="w-5 h-5" />
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="aspect-square p-0 border-emerald-800/50 active:bg-emerald-900/50"
+            <Button variant="outline" size="sm" className="aspect-square p-0"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("RIGHT"); }}
-              onClick={() => handleDirection("RIGHT")}
-            >
+              onClick={() => handleDirection("RIGHT")}>
               <ArrowRightIcon className="w-5 h-5" />
             </Button>
           </div>
