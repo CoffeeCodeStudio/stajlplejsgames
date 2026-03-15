@@ -334,12 +334,12 @@ export function SnakeGame({ onBack, username }: Props) {
     return (
       <div className="flex-1 overflow-y-auto">
         <div className="px-3 py-4 space-y-3">
-          <button onClick={() => setGameState("menu")} className="retro-btn text-[10px]">← Tillbaka</button>
+          <button onClick={() => setGameState("menu")} className="retro-btn text-[10px]">← Tillbaka till spel</button>
           <div className="retro-panel">
             <div className="retro-panel-header">🏆 TOPPLISTA — SNAKE</div>
             <div className="max-h-96 overflow-y-auto">
               {leaderboard.length === 0 ? (
-                <p className="text-center text-muted-foreground text-xs py-8">Inga poäng ännu!</p>
+                <p className="text-center text-muted-foreground text-xs py-8 font-pixel">Ingen har spelat ännu — bli först!</p>
               ) : leaderboard.map((entry, i) => (
                 <div key={entry.id} className="retro-table-row">
                   <span className="w-8 text-center font-bold text-xs">
@@ -385,7 +385,10 @@ export function SnakeGame({ onBack, username }: Props) {
               </div>
               <p className="text-sm text-muted-foreground">Styr ormen, ät äpplen och väx dig längre!</p>
               {highScore > 0 && (
-                <p className="text-xs">Ditt bästa: <span className="text-primary font-bold">{highScore}p</span></p>
+                <div className="retro-inset p-3 my-2">
+                  <div className="font-pixel text-[9px] text-muted-foreground mb-1">DITT BÄSTA</div>
+                  <div className="font-pixel text-lg text-primary" style={{ textShadow: '0 0 8px hsl(var(--primary) / 0.6)' }}>{highScore}p</div>
+                </div>
               )}
               <div className="retro-separator" />
               <button onClick={startGame} className="retro-btn retro-btn-primary text-sm px-6 py-2">
@@ -401,22 +404,6 @@ export function SnakeGame({ onBack, username }: Props) {
             🏆 Visa topplista
           </button>
 
-          {!username && (
-            <div className="retro-panel">
-              <div className="retro-panel-body text-center text-xs text-muted-foreground">
-                Lägg till <code className="text-primary bg-background px-1">?usr=DittNamn</code> i URL:en för att spara poäng
-              </div>
-            </div>
-          )}
-
-          <div className="retro-panel">
-            <div className="retro-panel-header">📖 KONTROLLER</div>
-            <div className="retro-panel-body text-xs text-muted-foreground space-y-1">
-              <p>• Piltangenter eller WASD för att styra</p>
-              <p>• Ät 🔴 äpplen för att växa och få poäng</p>
-              <p>• Undvik väggar och din egen svans!</p>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -446,13 +433,13 @@ export function SnakeGame({ onBack, username }: Props) {
                 </div>
               </div>
               {isNewBest && score > 0 && <p className="font-pixel text-[9px] text-primary animate-pulse">⭐ NYTT REKORD! ⭐</p>}
-              {!username && <p className="text-[10px] text-muted-foreground">Poäng ej sparad — lägg till ?usr=Namn</p>}
+              
             </div>
           </div>
           <div className="flex flex-wrap gap-2 justify-center">
             <button onClick={startGame} className="retro-btn retro-btn-primary">🔄 Igen</button>
             <button onClick={() => { setGameState("leaderboard"); fetchLeaderboard(); }} className="retro-btn">🏆 Topplista</button>
-            <button onClick={onBack} className="retro-btn">← Tillbaka</button>
+            <button onClick={onBack} className="retro-btn">← Tillbaka till spel</button>
           </div>
         </div>
       </div>
