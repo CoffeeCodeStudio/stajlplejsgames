@@ -89,14 +89,6 @@ export function GamesSection({ username }: GamesSectionProps) {
           </div>
         ))}
 
-        {!username && (
-          <div className="retro-panel">
-            <div className="retro-panel-header text-[8px]">💡 Tips</div>
-            <div className="retro-panel-body text-[10px] text-muted-foreground text-center">
-              Lägg till <code className="text-primary bg-background px-1">?usr=DittNamn</code> i URL:en för att spara poäng
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
