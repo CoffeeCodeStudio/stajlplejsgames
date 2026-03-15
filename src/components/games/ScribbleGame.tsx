@@ -64,8 +64,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   // Ink particle system
   const { onDrawMove, resetLastPos } = useInkParticles(containerRef);
 
-  const isDrawer = lobby?.current_drawer_id === user?.id;
-  const isCreator = lobby?.creator_id === user?.id;
+  const isDrawer = lobby?.current_drawer_id === guestId;
+  const isCreator = lobby?.creator_id === guestId;
   const maxRounds = players.length > 0 ? players.length * 2 : 4;
 
   // Join lobby on mount
