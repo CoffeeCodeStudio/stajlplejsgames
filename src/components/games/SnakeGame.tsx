@@ -339,7 +339,7 @@ export function SnakeGame({ onBack, username }: Props) {
             <div className="retro-panel-header">🏆 TOPPLISTA — SNAKE</div>
             <div className="max-h-96 overflow-y-auto">
               {leaderboard.length === 0 ? (
-                <p className="text-center text-muted-foreground text-xs py-8">Inga poäng ännu!</p>
+                <p className="text-center text-muted-foreground text-xs py-8 font-pixel">Ingen har spelat ännu — bli först!</p>
               ) : leaderboard.map((entry, i) => (
                 <div key={entry.id} className="retro-table-row">
                   <span className="w-8 text-center font-bold text-xs">
