@@ -354,51 +354,49 @@ export function MemoryGame({ onBack, username }: Props) {
   // Game board
   return (
     <div className="flex-1 flex flex-col">
-      <div className="px-3 py-2 space-y-2 flex-1 flex flex-col">
+      <div className="px-3 py-2 space-y-2">
         <div className="flex items-center justify-between">
-          <button onClick={onBack} className="retro-btn text-xs">←</button>
-          <div className="flex items-center gap-4 text-sm font-bold">
+          <button onClick={onBack} className="retro-btn text-base">←</button>
+          <div className="flex items-center gap-4 text-base font-bold">
             <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
             <span className="text-muted-foreground">🖱 {moves} drag</span>
             <span className="text-primary">{matchedPairs}/{totalPairs} par</span>
           </div>
-          <button onClick={() => startGame(difficulty)} className="retro-btn text-xs">🔄</button>
+          <button onClick={() => startGame(difficulty)} className="retro-btn text-base">🔄</button>
         </div>
 
-        <div className="flex-1 flex items-center justify-center">
-          <div
-            className="grid gap-2 mx-auto"
-            style={{
-              gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
-              maxWidth: config.cols * 72,
-            }}
-          >
-            {cards.map(card => (
-              <button
-                key={card.id}
-                onClick={() => handleCardClick(card.id)}
-                className={`
-                  aspect-square border-2 text-2xl sm:text-3xl font-bold transition-all duration-200
-                  ${card.matched
-                    ? "border-primary/40 bg-primary/10 opacity-50"
-                    : card.flipped
-                      ? "border-primary bg-background"
-                      : "border-border bg-muted hover:border-primary/50 cursor-pointer hover:bg-muted/80"
-                  }
-                `}
-                disabled={card.matched}
-              >
-                {card.flipped || card.matched ? (
-                  <span style={{ color: card.color, textShadow: `0 0 10px ${card.color}` }}>{card.emoji}</span>
-                ) : (
-                  <span className="text-muted-foreground text-base font-pixel">?</span>
-                )}
-              </button>
-            ))}
-          </div>
+        <div
+          className="grid gap-2 mx-auto"
+          style={{
+            gridTemplateColumns: `repeat(${config.cols}, 80px)`,
+          }}
+        >
+          {cards.map(card => (
+            <button
+              key={card.id}
+              onClick={() => handleCardClick(card.id)}
+              className={`
+                border-2 text-3xl font-bold transition-all duration-200
+                ${card.matched
+                  ? "border-primary/40 bg-primary/10 opacity-50"
+                  : card.flipped
+                    ? "border-primary bg-background"
+                    : "border-border bg-muted hover:border-primary/50 cursor-pointer hover:bg-muted/80"
+                }
+              `}
+              style={{ width: 80, height: 80 }}
+              disabled={card.matched}
+            >
+              {card.flipped || card.matched ? (
+                <span style={{ color: card.color, textShadow: `0 0 10px ${card.color}` }}>{card.emoji}</span>
+              ) : (
+                <span className="text-muted-foreground text-lg font-pixel">?</span>
+              )}
+            </button>
+          ))}
         </div>
 
-        <div className="text-center text-sm text-muted-foreground pb-1">
+        <div className="text-center text-base text-muted-foreground">
           Poäng: <span className="text-primary font-bold">{score}p</span>
         </div>
       </div>
