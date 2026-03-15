@@ -19,8 +19,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Space Grotesk", "sans-serif"],
+        sans: ["Tahoma", "Segoe UI", "Geneva", "Verdana", "sans-serif"],
+        display: ["Press Start 2P", "monospace"],
+        pixel: ["Press Start 2P", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
