@@ -302,52 +302,34 @@ export function MemoryGame({ onBack, username }: Props) {
     const isNewBest = score >= best;
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="container px-4 py-8 max-w-lg mx-auto space-y-6 text-center">
-          <div className="text-6xl mb-2">🎉</div>
-          <h2 className="font-display font-bold text-3xl">Grattis!</h2>
-          <p className="text-muted-foreground">Du hittade alla {totalPairs} par!</p>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-xl border border-border bg-card p-3">
-              <Trophy className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="font-display font-bold text-xl text-primary">{score}p</div>
-              <div className="text-xs text-muted-foreground">Poäng</div>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-3">
-              <MousePointerClick className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="font-display font-bold text-xl">{moves}</div>
-              <div className="text-xs text-muted-foreground">Drag</div>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-3">
-              <Clock className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="font-display font-bold text-xl">{formatTime(seconds)}</div>
-              <div className="text-xs text-muted-foreground">Tid</div>
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4 text-center">
+          <div className="retro-panel">
+            <div className="retro-panel-header">🎉 GRATTIS!</div>
+            <div className="retro-panel-body space-y-3">
+              <p className="text-sm text-muted-foreground">Du hittade alla {totalPairs} par!</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="retro-inset p-2">
+                  <div className="font-bold text-primary text-lg">{score}p</div>
+                  <div className="text-[10px] text-muted-foreground">Poäng</div>
+                </div>
+                <div className="retro-inset p-2">
+                  <div className="font-bold text-lg">{moves}</div>
+                  <div className="text-[10px] text-muted-foreground">Drag</div>
+                </div>
+                <div className="retro-inset p-2">
+                  <div className="font-bold text-lg">{formatTime(seconds)}</div>
+                  <div className="text-[10px] text-muted-foreground">Tid</div>
+                </div>
+              </div>
+              {isNewBest && <p className="font-pixel text-[9px] text-primary animate-pulse">⭐ NYTT REKORD! ⭐</p>}
+              {!username && <p className="text-[10px] text-muted-foreground">Poäng ej sparad — lägg till ?usr=Namn</p>}
             </div>
           </div>
-
-          {isNewBest && (
-            <div className="text-sm font-display font-bold text-primary animate-pulse">
-              ⭐ Nytt rekord! ⭐
-            </div>
-          )}
-
-          {!username && (
-            <p className="text-xs text-muted-foreground">Poängen sparades inte — lägg till ?usr=DittNamn i URL:en</p>
-          )}
-
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Button variant="outline" onClick={() => startGame(difficulty)} className="font-display gap-1">
-              <RotateCcw className="w-4 h-4" /> Spela igen
-            </Button>
-            <Button variant="outline" onClick={() => { setShowLeaderboard(true); setLeaderboardDiff(difficulty); fetchLeaderboard(difficulty); }} className="font-display gap-1">
-              <Medal className="w-4 h-4" /> Topplista
-            </Button>
-            <Button variant="outline" onClick={() => setDifficulty(null)} className="font-display">
-              Byt svårighet
-            </Button>
-            <Button variant="ghost" onClick={onBack} className="font-display">
-              Tillbaka
-            </Button>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button onClick={() => startGame(difficulty)} className="retro-btn">🔄 Igen</button>
+            <button onClick={() => { setShowLeaderboard(true); setLeaderboardDiff(difficulty); fetchLeaderboard(difficulty); }} className="retro-btn">🏆 Topplista</button>
+            <button onClick={() => setDifficulty(null)} className="retro-btn">Byt svårighet</button>
+            <button onClick={onBack} className="retro-btn">← Tillbaka</button>
           </div>
         </div>
       </div>
