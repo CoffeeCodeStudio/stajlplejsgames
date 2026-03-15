@@ -439,7 +439,7 @@ export function SnakeGame({ onBack, username }: Props) {
           <div className="flex flex-wrap gap-2 justify-center">
             <button onClick={startGame} className="retro-btn retro-btn-primary">🔄 Igen</button>
             <button onClick={() => { setGameState("leaderboard"); fetchLeaderboard(); }} className="retro-btn">🏆 Topplista</button>
-            <button onClick={onBack} className="retro-btn">← Tillbaka</button>
+            <button onClick={onBack} className="retro-btn">← Tillbaka till spel</button>
           </div>
         </div>
       </div>
