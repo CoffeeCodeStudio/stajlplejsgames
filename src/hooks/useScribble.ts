@@ -54,50 +54,71 @@ export function useScribbleLobbies() {
   const { toast } = useToast();
 
   const fetchLobbies = useCallback(async () => {
-    if (!user) return;
-
-    // Only fetch active lobbies — no aggressive deletes (RLS blocks non-creator deletes anyway)
-    const { data, error } = await supabase
-      .from('scribble_lobbies')
-      .select('*')
-      .in('status', ['waiting', 'playing'])
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching lobbies:', error);
+    if (!user) {
       setLoading(false);
+      setLobbies([]);
       return;
     }
 
-    // Get player counts
-    const lobbyIds = (data || []).map(l => l.id);
-    let counts: Record<string, number> = {};
-    if (lobbyIds.length > 0) {
-      const { data: players } = await supabase
-        .from('scribble_players')
-        .select('lobby_id')
-        .in('lobby_id', lobbyIds);
+    try {
+      const { data, error } = await supabase
+        .from('scribble_lobbies')
+        .select('*')
+        .in('status', ['waiting', 'playing'])
+        .order('created_at', { ascending: false });
 
-      (players || []).forEach(p => {
-        counts[p.lobby_id] = (counts[p.lobby_id] || 0) + 1;
-      });
+      if (error) {
+        console.error('Error fetching lobbies:', error);
+        setLoading(false);
+        return;
+      }
+
+      // Get player counts
+      const lobbyIds = (data || []).map(l => l.id);
+      let counts: Record<string, number> = {};
+      if (lobbyIds.length > 0) {
+        const { data: players } = await supabase
+          .from('scribble_players')
+          .select('lobby_id')
+          .in('lobby_id', lobbyIds);
+
+        (players || []).forEach(p => {
+          counts[p.lobby_id] = (counts[p.lobby_id] || 0) + 1;
+        });
+      }
+
+      setLobbies((data || []).map(l => ({ ...l, player_count: counts[l.id] || 0 })));
+    } catch (err) {
+      console.error('Failed to fetch lobbies:', err);
+    } finally {
+      setLoading(false);
     }
-
-    setLobbies((data || []).map(l => ({ ...l, player_count: counts[l.id] || 0 })));
-    setLoading(false);
   }, [user]);
 
   useEffect(() => {
     fetchLobbies();
+
+    // Timeout fallback: if still loading after 5s, force stop
+    const timeout = setTimeout(() => {
+      setLoading(prev => {
+        if (prev) console.warn('Lobby fetch timed out after 5s');
+        return false;
+      });
+    }, 5000);
 
     const channel = supabase
       .channel('scribble-lobbies')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'scribble_lobbies' }, () => {
         fetchLobbies();
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Scribble realtime subscription error:', err);
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      clearTimeout(timeout);
+      supabase.removeChannel(channel);
+    };
   }, [fetchLobbies]);
 
   const createLobby = async (title: string, description: string) => {
