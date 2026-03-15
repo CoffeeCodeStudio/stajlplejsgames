@@ -56,45 +56,32 @@ export function useScribbleLobbies() {
   const fetchLobbies = useCallback(async () => {
     if (!user) return;
 
-    // Clean up finished or stale lobbies (inactive > 5 min)
-    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-
-    // Delete finished lobbies
-    await supabase
-      .from('scribble_lobbies')
-      .delete()
-      .eq('status', 'finished');
-
-    // Delete stale waiting lobbies (no activity for 5+ min)
-    await supabase
-      .from('scribble_lobbies')
-      .delete()
-      .eq('status', 'waiting')
-      .lt('updated_at', fiveMinAgo);
-
+    // Only fetch active lobbies — no aggressive deletes (RLS blocks non-creator deletes anyway)
     const { data, error } = await supabase
       .from('scribble_lobbies')
       .select('*')
       .in('status', ['waiting', 'playing'])
-      .gte('updated_at', fiveMinAgo)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching lobbies:', error);
+      setLoading(false);
       return;
     }
 
     // Get player counts
     const lobbyIds = (data || []).map(l => l.id);
-    const { data: players } = await supabase
-      .from('scribble_players')
-      .select('lobby_id')
-      .in('lobby_id', lobbyIds.length > 0 ? lobbyIds : ['none']);
+    let counts: Record<string, number> = {};
+    if (lobbyIds.length > 0) {
+      const { data: players } = await supabase
+        .from('scribble_players')
+        .select('lobby_id')
+        .in('lobby_id', lobbyIds);
 
-    const counts: Record<string, number> = {};
-    (players || []).forEach(p => {
-      counts[p.lobby_id] = (counts[p.lobby_id] || 0) + 1;
-    });
+      (players || []).forEach(p => {
+        counts[p.lobby_id] = (counts[p.lobby_id] || 0) + 1;
+      });
+    }
 
     setLobbies((data || []).map(l => ({ ...l, player_count: counts[l.id] || 0 })));
     setLoading(false);
