@@ -239,8 +239,8 @@ export function MemoryGame({ onBack, username }: Props) {
   if (!difficulty) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-          <button onClick={onBack} className="retro-btn text-xs">← Tillbaka till spel</button>
+        <div className="px-3 py-4 space-y-3">
+          <button onClick={onBack} className="retro-btn text-[10px]">← Tillbaka till spel</button>
 
           <div className="retro-panel">
             <div className="retro-panel-header">🧠 MEMORY</div>
