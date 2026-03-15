@@ -1,7 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, RotateCcw, Trophy, Clock, Medal, Apple, ArrowUp, ArrowDown, ArrowRight as ArrowRightIcon, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const GRID_SIZE = 20;
@@ -98,10 +95,12 @@ export function SnakeGame({ onBack, username }: Props) {
     const w = GRID_SIZE * CELL_SIZE;
     const h = GRID_SIZE * CELL_SIZE;
 
-    ctx.fillStyle = "#1a1a2e";
+    // Dark background
+    ctx.fillStyle = "#0a0a1a";
     ctx.fillRect(0, 0, w, h);
 
-    ctx.strokeStyle = "#16213e";
+    // Grid overlay
+    ctx.strokeStyle = "rgba(0, 255, 80, 0.06)";
     ctx.lineWidth = 0.5;
     for (let i = 0; i <= GRID_SIZE; i++) {
       ctx.beginPath();
@@ -114,59 +113,88 @@ export function SnakeGame({ onBack, username }: Props) {
       ctx.stroke();
     }
 
-    const apple = appleRef.current;
-    ctx.fillStyle = "#ff3b3b";
-    ctx.shadowColor = "#ff3b3b";
-    ctx.shadowBlur = 8;
-    ctx.fillRect(apple.x * CELL_SIZE + 2, apple.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-    ctx.fillStyle = "#ff6b6b";
-    ctx.fillRect(apple.x * CELL_SIZE + 3, apple.y * CELL_SIZE + 3, 4, 4);
-    ctx.shadowBlur = 0;
+    // Scanline overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+    for (let y = 0; y < h; y += 3) {
+      ctx.fillRect(0, y, w, 1);
+    }
 
+    // Apple - bright red pixel block
+    const apple = appleRef.current;
+    ctx.shadowColor = "#ff0000";
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "#ff1111";
+    ctx.fillRect(apple.x * CELL_SIZE + 1, apple.y * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+    // Apple highlight pixel
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#ff6666";
+    ctx.fillRect(apple.x * CELL_SIZE + 3, apple.y * CELL_SIZE + 3, 3, 3);
+    // Apple stem
+    ctx.fillStyle = "#33aa33";
+    ctx.fillRect(apple.x * CELL_SIZE + 6, apple.y * CELL_SIZE, 3, 3);
+
+    // Snake - bright green with pixel art feel
     const snake = snakeRef.current;
     snake.forEach((segment, i) => {
       const isHead = i === 0;
-      const brightness = Math.max(40, 100 - i * 3);
 
       if (isHead) {
-        ctx.fillStyle = "#00ff88";
-        ctx.shadowColor = "#00ff88";
-        ctx.shadowBlur = 6;
+        ctx.shadowColor = "#00ff44";
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = "#00ff44";
       } else {
-        ctx.fillStyle = `hsl(150, 100%, ${brightness}%)`;
         ctx.shadowBlur = 0;
+        const g = Math.max(100, 220 - i * 6);
+        ctx.fillStyle = `rgb(0, ${g}, 30)`;
       }
 
-      ctx.fillRect(segment.x * CELL_SIZE + 1, segment.y * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+      // Pixel block body
+      ctx.fillRect(
+        segment.x * CELL_SIZE + 1,
+        segment.y * CELL_SIZE + 1,
+        CELL_SIZE - 2,
+        CELL_SIZE - 2
+      );
 
+      // Inner pixel highlight for depth
       if (isHead) {
         ctx.shadowBlur = 0;
+        ctx.fillStyle = "#88ffaa";
+        ctx.fillRect(segment.x * CELL_SIZE + 3, segment.y * CELL_SIZE + 3, 3, 3);
+
+        // Eyes
         ctx.fillStyle = "#000";
         const dir = directionRef.current;
         const cx = segment.x * CELL_SIZE + CELL_SIZE / 2;
         const cy = segment.y * CELL_SIZE + CELL_SIZE / 2;
-        const eyeOffset = 3;
-        
+        const eo = 3;
+
         if (dir === "RIGHT" || dir === "LEFT") {
-          const dx = dir === "RIGHT" ? eyeOffset : -eyeOffset;
-          ctx.fillRect(cx + dx - 1, cy - 4, 3, 3);
-          ctx.fillRect(cx + dx - 1, cy + 2, 3, 3);
+          const dx = dir === "RIGHT" ? eo : -eo;
+          ctx.fillRect(cx + dx - 1, cy - 4, 2, 2);
+          ctx.fillRect(cx + dx - 1, cy + 2, 2, 2);
         } else {
-          const dy = dir === "DOWN" ? eyeOffset : -eyeOffset;
-          ctx.fillRect(cx - 4, cy + dy - 1, 3, 3);
-          ctx.fillRect(cx + 2, cy + dy - 1, 3, 3);
+          const dy = dir === "DOWN" ? eo : -eo;
+          ctx.fillRect(cx - 4, cy + dy - 1, 2, 2);
+          ctx.fillRect(cx + 2, cy + dy - 1, 2, 2);
         }
+      } else {
+        // Body segment inner pixel
+        ctx.fillStyle = `rgba(100, 255, 140, 0.3)`;
+        ctx.fillRect(segment.x * CELL_SIZE + 3, segment.y * CELL_SIZE + 3, 2, 2);
       }
     });
+
+    ctx.shadowBlur = 0;
   }, []);
 
   const endGame = useCallback(() => {
     if (gameLoopRef.current) clearInterval(gameLoopRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
-    
+
     const finalScore = scoreRef.current;
     const apples = applesRef.current;
-    
+
     setScore(finalScore);
     setApplesEaten(apples);
     setGameState("gameover");
@@ -341,6 +369,20 @@ export function SnakeGame({ onBack, username }: Props) {
           <div className="retro-panel">
             <div className="retro-panel-header">🐍 SNAKE</div>
             <div className="retro-panel-body text-center space-y-3">
+              {/* Pixel snake art */}
+              <div className="flex justify-center gap-0.5 py-2">
+                {[...Array(8)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-3 h-3 rounded-none"
+                    style={{
+                      backgroundColor: i === 0 ? '#00ff44' : `rgb(0, ${Math.max(100, 220 - i * 15)}, 30)`,
+                      boxShadow: i === 0 ? '0 0 6px #00ff44' : 'none',
+                    }}
+                  />
+                ))}
+                <div className="w-3 h-3 rounded-full ml-2" style={{ backgroundColor: '#ff1111', boxShadow: '0 0 6px #ff0000' }} />
+              </div>
               <p className="text-sm text-muted-foreground">Styr ormen, ät äpplen och väx dig längre!</p>
               {highScore > 0 && (
                 <p className="text-xs">Ditt bästa: <span className="text-primary font-bold">{highScore}p</span></p>
@@ -391,16 +433,16 @@ export function SnakeGame({ onBack, username }: Props) {
             <div className="retro-panel-body space-y-3">
               <div className="grid grid-cols-3 gap-2">
                 <div className="retro-inset p-2">
-                  <div className="font-bold text-primary text-lg">{score}p</div>
-                  <div className="text-[10px] text-muted-foreground">Poäng</div>
+                  <div className="font-pixel text-[10px] text-primary">{score}p</div>
+                  <div className="text-[9px] text-muted-foreground font-pixel">POÄNG</div>
                 </div>
                 <div className="retro-inset p-2">
-                  <div className="font-bold text-lg">{applesEaten}</div>
-                  <div className="text-[10px] text-muted-foreground">Äpplen</div>
+                  <div className="font-pixel text-[10px] text-foreground">{applesEaten}</div>
+                  <div className="text-[9px] text-muted-foreground font-pixel">ÄPPLEN</div>
                 </div>
                 <div className="retro-inset p-2">
-                  <div className="font-bold text-lg">{formatTime(seconds)}</div>
-                  <div className="text-[10px] text-muted-foreground">Tid</div>
+                  <div className="font-pixel text-[10px] text-foreground">{formatTime(seconds)}</div>
+                  <div className="text-[9px] text-muted-foreground font-pixel">TID</div>
                 </div>
               </div>
               {isNewBest && score > 0 && <p className="font-pixel text-[9px] text-primary animate-pulse">⭐ NYTT REKORD! ⭐</p>}
@@ -423,19 +465,29 @@ export function SnakeGame({ onBack, username }: Props) {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="px-3 py-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <button onClick={() => { endGame(); setGameState("menu"); }} className="retro-btn text-[10px]">← Avsluta</button>
-          <div className="flex items-center gap-3 text-xs">
-            <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
-            <span className="text-destructive">🍎 {applesEaten}</span>
-            <span className="text-primary font-bold">{score}p</span>
+        {/* HUD bar */}
+        <div className="retro-panel">
+          <div className="retro-panel-body p-1.5 flex items-center justify-between">
+            <button onClick={() => { endGame(); setGameState("menu"); }} className="retro-btn text-[9px] py-0.5 px-2">✕ AVSLUTA</button>
+            <div className="flex items-center gap-3 font-pixel text-[8px]">
+              <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
+              <span style={{ color: '#ff1111' }}>🍎 {applesEaten}</span>
+              <span className="text-primary font-bold">{score}P</span>
+            </div>
           </div>
         </div>
 
+        {/* Game canvas with retro glow border */}
         <div className="flex justify-center">
           <div
-            className="border-2 border-border overflow-hidden"
-            style={{ width: canvasSize, height: canvasSize }}
+            className="relative"
+            style={{
+              width: canvasSize + 4,
+              height: canvasSize + 4,
+              border: '2px solid #00ff44',
+              boxShadow: '0 0 12px rgba(0, 255, 68, 0.4), inset 0 0 12px rgba(0, 255, 68, 0.1)',
+              background: '#0a0a1a',
+            }}
           >
             <canvas
               ref={canvasRef}
@@ -450,24 +502,24 @@ export function SnakeGame({ onBack, username }: Props) {
         <div className="flex justify-center md:hidden">
           <div className="grid grid-cols-3 gap-1 w-36">
             <div />
-            <button className="retro-btn aspect-square flex items-center justify-center"
+            <button className="retro-btn aspect-square flex items-center justify-center text-xs"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("UP"); }}
               onClick={() => handleDirection("UP")}>▲</button>
             <div />
-            <button className="retro-btn aspect-square flex items-center justify-center"
+            <button className="retro-btn aspect-square flex items-center justify-center text-xs"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("LEFT"); }}
               onClick={() => handleDirection("LEFT")}>◄</button>
-            <button className="retro-btn aspect-square flex items-center justify-center"
+            <button className="retro-btn aspect-square flex items-center justify-center text-xs"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("DOWN"); }}
               onClick={() => handleDirection("DOWN")}>▼</button>
-            <button className="retro-btn aspect-square flex items-center justify-center"
+            <button className="retro-btn aspect-square flex items-center justify-center text-xs"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("RIGHT"); }}
               onClick={() => handleDirection("RIGHT")}>►</button>
           </div>
         </div>
 
-        <p className="text-center text-[10px] text-muted-foreground hidden md:block">
-          Piltangenter eller WASD för att styra
+        <p className="text-center text-[9px] text-muted-foreground font-pixel hidden md:block">
+          PILTANGENTER / WASD
         </p>
       </div>
     </div>
