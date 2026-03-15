@@ -1,0 +1,1 @@
+export { HabboRoom } from './HabboRoom';

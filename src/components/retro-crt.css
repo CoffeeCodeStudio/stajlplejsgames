@@ -1,0 +1,286 @@
+/* ===== Retro CRT TV ===== */
+
+.retro-crt-tv {
+  --crt-orange: #FF8C00;
+  --crt-cyan: #00BFDF;
+  --crt-body-bg: #2a2a2e;
+  --crt-bezel: #1a1a1e;
+  --crt-screen-bg: #0a0e14;
+  width: 260px;
+  user-select: none;
+}
+
+/* TV body */
+.crt-body {
+  background: linear-gradient(145deg, #3a3a40, var(--crt-body-bg));
+  border-radius: 14px;
+  padding: 14px 14px 8px;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,.6),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  border: 2px solid #444;
+}
+
+/* Bezel */
+.crt-bezel {
+  background: var(--crt-bezel);
+  border-radius: 8px;
+  padding: 6px;
+  border: 2px solid #222;
+  box-shadow: inset 0 0 12px rgba(0,0,0,.7);
+}
+
+/* Screen */
+.crt-screen {
+  position: relative;
+  background: radial-gradient(ellipse at center, #0e1420 0%, var(--crt-screen-bg) 80%);
+  border-radius: 12px / 10px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 40px rgba(0, 191, 223, .06),
+    inset 0 0 80px rgba(0, 0, 0, .5),
+    0 0 2px 1px rgba(0, 191, 223, .08),
+    0 0 8px rgba(0, 191, 223, .1);
+}
+
+/* Scanlines */
+.crt-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, .15) 2px,
+    rgba(0, 0, 0, .15) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+  animation: crt-scanline-scroll 8s linear infinite;
+}
+
+@keyframes crt-scanline-scroll {
+  0%   { background-position-y: 0; }
+  100% { background-position-y: 120px; }
+}
+
+/* Glitch bar */
+.crt-glitch {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 140, 0, .18);
+  z-index: 3;
+  pointer-events: none;
+  animation: crt-glitch-move 6s ease-in-out infinite;
+  opacity: 0;
+}
+
+@keyframes crt-glitch-move {
+  0%, 90%, 100% { opacity: 0; top: -4px; }
+  92% { opacity: 1; top: 10%; }
+  94% { opacity: .6; top: 55%; }
+  96% { opacity: 1; top: 80%; }
+  98% { opacity: 0; top: 105%; }
+}
+
+/* Typing text */
+.crt-text {
+  position: relative;
+  z-index: 1;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: var(--crt-cyan);
+  text-shadow:
+    0 0 4px rgba(0, 191, 223, .9),
+    0 0 11px rgba(0, 191, 223, .6),
+    0 0 22px rgba(0, 191, 223, .35),
+    0 0 44px rgba(0, 191, 223, .15),
+    0 0 1px rgba(255, 255, 255, .4);
+  padding: 0 12px;
+  text-align: center;
+  line-height: 1.4;
+  animation: crt-phosphor-pulse 3s ease-in-out infinite;
+}
+
+@keyframes crt-phosphor-pulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.15); }
+}
+
+/* Blinking cursor */
+.crt-cursor {
+  color: var(--crt-orange);
+  text-shadow: 0 0 6px rgba(255, 140, 0, .8);
+  animation: crt-blink .7s steps(1) infinite;
+  margin-left: 1px;
+  font-size: 13px;
+}
+
+@keyframes crt-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Controls row */
+.crt-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px 2px;
+  justify-content: flex-end;
+}
+
+.crt-knob {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #555, #333);
+  border: 1.5px solid #222;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,.1);
+}
+
+.crt-knob--small {
+  width: 10px;
+  height: 10px;
+}
+
+.crt-led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--crt-orange);
+  box-shadow: 0 0 6px rgba(255, 140, 0, .8);
+  animation: crt-blink 2s ease-in-out infinite;
+}
+
+/* Stand */
+.crt-stand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.crt-stand-neck {
+  width: 20px;
+  height: 10px;
+  background: linear-gradient(180deg, #444, #333);
+  border-left: 1px solid #555;
+  border-right: 1px solid #555;
+}
+
+.crt-stand-base {
+  width: 80px;
+  height: 6px;
+  background: linear-gradient(180deg, #444, #2a2a2e);
+  border-radius: 0 0 4px 4px;
+  border: 1px solid #555;
+  border-top: none;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .retro-crt-tv {
+    width: 220px;
+  }
+  .crt-screen {
+    height: 100px;
+  }
+  .crt-text {
+    font-size: 12px;
+  }
+}
+
+/* ===== Pixel Welcome Banner ===== */
+
+.pixel-banner {
+  position: relative;
+  border: 2px solid hsl(32 95% 55% / .4);
+  border-radius: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(
+    90deg,
+    hsl(230 30% 16% / .9),
+    hsl(260 40% 20% / .6),
+    hsl(230 30% 16% / .9)
+  );
+  background-size: 200% 100%;
+  animation: pixel-banner-shift 4s ease-in-out infinite;
+  overflow: hidden;
+}
+
+.pixel-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(255 140 0 / .04) 3px,
+    rgba(255 140 0 / .04) 6px
+  );
+  pointer-events: none;
+}
+
+.pixel-banner-text {
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: hsl(32 95% 55%);
+  text-shadow: 0 0 8px hsl(32 95% 55% / .5);
+  text-align: center;
+}
+
+@keyframes pixel-banner-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* Star decoration */
+.pixel-star {
+  display: inline-block;
+  animation: pixel-star-spin 3s linear infinite;
+}
+
+@keyframes pixel-star-spin {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* ===== Blinking NEW Badge ===== */
+
+.retro-new-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  font-family: "Courier New", monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: hsl(230 35% 10%);
+  background: hsl(32 95% 55%);
+  border-radius: 3px;
+  border: 1px solid hsl(32 95% 70%);
+  box-shadow: 0 0 6px hsl(32 95% 55% / .6);
+  animation: retro-badge-blink 1.2s steps(1) infinite;
+  vertical-align: middle;
+  margin-left: 6px;
+  line-height: 1.4;
+}
+
+@keyframes retro-badge-blink {
+  0%, 70%  { opacity: 1; }
+  71%, 100% { opacity: 0; }
+}

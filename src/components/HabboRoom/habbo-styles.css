@@ -1,0 +1,432 @@
+/* Habbo Room - 100% Retro Pixel Aesthetic */
+
+/* Font - pixel style */
+@font-face {
+  font-family: 'PixelFont';
+  src: local('Courier New'), local('monospace');
+}
+
+.habbo-room-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: 'Courier New', monospace;
+  image-rendering: pixelated;
+}
+
+/* Scanline effect for CRT feel */
+.habbo-room-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Logo styling */
+.habbo-logo {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 50;
+}
+
+.habbo-logo-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 
+    2px 2px 0 #8b6914,
+    4px 4px 0 #4a3708;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
+}
+
+/* Vibe Wallet */
+.vibe-wallet {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #2a2a4a;
+  border: 3px solid #4a4a6a;
+  box-shadow: 
+    inset 0 0 0 1px #1a1a2a,
+    3px 3px 0 #1a1a2a;
+  z-index: 50;
+}
+
+.vibe-wallet-text {
+  font-size: 14px;
+  color: #ffd700;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 #8b6914;
+}
+
+/* Main room container */
+.habbo-room {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 4/3;
+  margin: 20px;
+}
+
+/* Isometric room container */
+.isometric-room-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pixel Avatar */
+.pixel-avatar {
+  position: relative;
+  z-index: 10;
+}
+
+/* Avatar animations */
+.animate-pixel-idle {
+  animation: pixel-idle 2s ease-in-out infinite;
+}
+
+@keyframes pixel-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.animate-pixel-wave {
+  animation: pixel-wave 0.5s ease-in-out infinite;
+}
+
+@keyframes pixel-wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+.animate-pixel-dance {
+  animation: pixel-dance 0.3s ease-in-out infinite;
+}
+
+@keyframes pixel-dance {
+  0%, 100% { transform: translateX(0) scaleX(1); }
+  25% { transform: translateX(-4px) scaleX(0.95); }
+  50% { transform: translateX(0) scaleX(1.05); }
+  75% { transform: translateX(4px) scaleX(0.95); }
+}
+
+.pixel-sit {
+  transform: translateY(8px);
+}
+
+/* Chat bubbles container */
+.chat-bubbles-container {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Pixel chat bubble */
+.pixel-chat-bubble {
+  position: relative;
+  background: #ffffff;
+  border: 3px solid #2a2a4a;
+  padding: 8px 12px;
+  max-width: 200px;
+  box-shadow: 3px 3px 0 #1a1a2a;
+  transition: transform 0.1s linear;
+}
+
+.pixel-bubble-content {
+  font-size: 12px;
+  color: #2a2a4a;
+  word-wrap: break-word;
+  font-family: 'Courier New', monospace;
+}
+
+.pixel-bubble-tail {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #2a2a4a;
+}
+
+.pixel-bubble-tail::after {
+  content: '';
+  position: absolute;
+  top: -11px;
+  left: -4px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid #ffffff;
+}
+
+/* Controls area */
+.habbo-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Pixel button style */
+.pixel-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  background: #4a4a8a;
+  border: none;
+  box-shadow: 
+    inset -2px -2px 0 #2a2a4a,
+    inset 2px 2px 0 #6a6aaa,
+    3px 3px 0 #1a1a2a;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.1s;
+}
+
+.pixel-button:hover {
+  background: #5a5a9a;
+  transform: translate(-1px, -1px);
+  box-shadow: 
+    inset -2px -2px 0 #3a3a5a,
+    inset 2px 2px 0 #7a7aba,
+    4px 4px 0 #1a1a2a;
+}
+
+.pixel-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 
+    inset -2px -2px 0 #2a2a4a,
+    inset 2px 2px 0 #6a6aaa,
+    1px 1px 0 #1a1a2a;
+}
+
+.pixel-button-active {
+  background: #ffd700;
+  color: #2a2a4a;
+  box-shadow: 
+    inset -2px -2px 0 #8b6914,
+    inset 2px 2px 0 #ffec8b,
+    3px 3px 0 #1a1a2a;
+}
+
+/* Chat form */
+.habbo-chat-form {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.habbo-chat-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #2a2a4a;
+  background: #e8e8e8;
+  border: 3px solid #4a4a6a;
+  box-shadow: 
+    inset 2px 2px 0 #c8c8c8,
+    inset -2px -2px 0 #ffffff;
+  font-family: 'Courier New', monospace;
+  outline: none;
+}
+
+.habbo-chat-input::placeholder {
+  color: #8a8a8a;
+}
+
+.habbo-chat-input:focus {
+  border-color: #6a6aaa;
+}
+
+.pixel-button-send {
+  background: #4a8a4a;
+  box-shadow: 
+    inset -2px -2px 0 #2a4a2a,
+    inset 2px 2px 0 #6aaa6a,
+    3px 3px 0 #1a1a2a;
+}
+
+.pixel-button-send:hover {
+  background: #5a9a5a;
+}
+
+/* Closed sign overlay */
+.closed-sign-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 30;
+}
+
+.closed-sign {
+  position: relative;
+}
+
+.closed-sign-frame {
+  padding: 24px 32px;
+  background: #8b6914;
+  border: 4px solid #4a3708;
+  box-shadow: 
+    inset -4px -4px 0 #5a4912,
+    inset 4px 4px 0 #a67c00,
+    6px 6px 0 #2a2a2a;
+}
+
+.closed-sign-content {
+  text-align: center;
+  color: #fff8dc;
+}
+
+.closed-sign-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.closed-sign-title {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+  text-shadow: 2px 2px 0 #4a3708;
+  letter-spacing: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+.closed-sign-text {
+  font-size: 14px;
+  margin: 0 0 4px 0;
+  font-family: 'Courier New', monospace;
+}
+
+.closed-sign-subtext {
+  font-size: 12px;
+  margin: 0;
+  color: #d4c4a4;
+  font-family: 'Courier New', monospace;
+}
+
+/* Furniture styles */
+.pixel-furniture {
+  transition: transform 0.2s ease, filter 0.2s ease;
+  z-index: 5;
+}
+
+.pixel-furniture-sittable {
+  cursor: pointer;
+}
+
+.pixel-furniture-sittable:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+  filter: brightness(1.2);
+}
+
+.pixel-furniture-selected {
+  filter: brightness(1.3) drop-shadow(0 0 4px #ffd700);
+}
+
+.furniture-label {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2a2a4a;
+  color: #ffd700;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+  border: 2px solid #4a4a6a;
+  box-shadow: 2px 2px 0 #1a1a2a;
+}
+
+.furniture-hint {
+  font-size: 11px;
+  color: #6a6a8a;
+  margin: 0;
+  font-family: 'Courier New', monospace;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .habbo-room {
+    margin: 10px;
+  }
+  
+  .habbo-logo-text {
+    font-size: 18px;
+  }
+  
+  .habbo-controls {
+    padding: 12px;
+  }
+  
+  .pixel-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .habbo-chat-input {
+    font-size: 12px;
+  }
+  
+  .closed-sign-title {
+    font-size: 24px;
+  }
+  
+  .pixel-furniture svg {
+    width: 80%;
+    height: 80%;
+  }
+}
