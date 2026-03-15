@@ -4,9 +4,23 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, RotateCcw, Trophy, Clock, MousePointerClick, Medal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const PIXEL_EMOJIS = [
-  "🎮", "👾", "🕹️", "🤖", "💾", "📟", "🌟", "🎵",
-  "🐱", "🐶", "🦊", "🐸", "🍕", "🚀", "⚡", "🔥",
+const SYMBOLS = [
+  { char: "★", color: "#ffcc00" },
+  { char: "♥", color: "#ff3366" },
+  { char: "♠", color: "#00ff88" },
+  { char: "♣", color: "#44ddff" },
+  { char: "♦", color: "#ff6622" },
+  { char: "☺", color: "#ffee55" },
+  { char: "☽", color: "#cc99ff" },
+  { char: "♪", color: "#ff44aa" },
+  { char: "★", color: "#ff8800" },
+  { char: "♥", color: "#ff0044" },
+  { char: "♠", color: "#66ffcc" },
+  { char: "♣", color: "#00ccff" },
+  { char: "♦", color: "#ffaa00" },
+  { char: "☺", color: "#88ff44" },
+  { char: "☽", color: "#aa88ff" },
+  { char: "♪", color: "#ff66cc" },
 ];
 
 interface Card {
