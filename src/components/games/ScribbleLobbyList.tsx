@@ -8,10 +8,12 @@ import { Gamepad2, Plus, Users, Clock } from "lucide-react";
 
 interface ScribbleLobbyListProps {
   onJoinLobby: (lobbyId: string) => void;
+  guestId: string;
+  guestUsername: string | null;
 }
 
-export function ScribbleLobbyList({ onJoinLobby }: ScribbleLobbyListProps) {
-  const { lobbies, loading, createLobby } = useScribbleLobbies();
+export function ScribbleLobbyList({ onJoinLobby, guestId, guestUsername }: ScribbleLobbyListProps) {
+  const { lobbies, loading, createLobby } = useScribbleLobbies(guestId, guestUsername);
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
