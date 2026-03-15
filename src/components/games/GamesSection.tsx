@@ -68,14 +68,14 @@ export function GamesSection({ username }: GamesSectionProps) {
           <div key={game.id} className="retro-panel">
             <div className="retro-panel-header flex items-center justify-between">
               <span>{game.icon} {game.name}</span>
-              <span style={{ fontFamily: 'Tahoma, sans-serif', fontSize: 11, fontWeight: 'normal', textTransform: 'none' }}>
+              <span style={{ fontFamily: 'Tahoma, sans-serif', fontSize: 14, fontWeight: 'normal', textTransform: 'none' }}>
                 {game.players}
               </span>
             </div>
             <div className="retro-panel-body flex items-center justify-between gap-3">
-              <p className="text-sm text-muted-foreground flex-1">{game.description}</p>
+              <p className="text-base text-muted-foreground flex-1">{game.description}</p>
               <button
-                className="retro-btn retro-btn-primary text-xs"
+                className="retro-btn retro-btn-primary text-base"
                 onClick={
                   game.id === "memory" ? () => setView("memory") :
                   game.id === "snake" ? () => setView("snake") :

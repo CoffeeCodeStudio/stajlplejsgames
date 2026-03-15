@@ -255,14 +255,14 @@ export function MemoryGame({ onBack, username }: Props) {
     return (
       <div className="flex-1 overflow-y-auto">
         <div className="px-3 py-4 space-y-3">
-          <button onClick={onBack} className="retro-btn text-[10px]">← Tillbaka till spel</button>
+          <button onClick={onBack} className="retro-btn text-base">← Tillbaka till spel</button>
 
           <div className="retro-panel">
             <div className="retro-panel-header">🧠 MEMORY</div>
             <div className="retro-panel-body text-center space-y-3">
-              <p className="text-sm text-muted-foreground">Hitta alla matchande par så snabbt du kan!</p>
+              <p className="text-base text-muted-foreground">Hitta alla matchande par så snabbt du kan!</p>
               <div className="retro-separator" />
-              <p className="font-pixel text-[9px] text-primary uppercase">Välj svårighetsgrad</p>
+              <p className="font-pixel text-xs text-primary uppercase">Välj svårighetsgrad</p>
             </div>
           </div>
 
@@ -275,13 +275,13 @@ export function MemoryGame({ onBack, username }: Props) {
               >
                 <div className="retro-panel-body flex items-center justify-between">
                   <div>
-                    <span className="font-bold text-sm">{cfg.label}</span>
-                    <p className="text-[10px] text-muted-foreground">{cfg.pairs * 2} kort</p>
+                    <span className="font-bold text-base">{cfg.label}</span>
+                    <p className="text-sm text-muted-foreground">{cfg.pairs * 2} kort</p>
                   </div>
                   {bestScores[key] ? (
                     <div className="text-right">
-                      <div className="text-[10px] text-muted-foreground">Bästa</div>
-                      <div className="font-bold text-primary text-sm">{bestScores[key]}p</div>
+                      <div className="text-sm text-muted-foreground">Bästa</div>
+                      <div className="font-bold text-primary text-lg">{bestScores[key]}p</div>
                     </div>
                   ) : null}
                 </div>
