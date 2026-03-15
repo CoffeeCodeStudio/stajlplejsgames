@@ -239,34 +239,34 @@ export function MemoryGame({ onBack, username }: Props) {
   if (!difficulty) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="container px-4 py-8 max-w-lg mx-auto space-y-6">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Tillbaka till spel
-          </Button>
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+          <button onClick={onBack} className="retro-btn text-xs">← Tillbaka till spel</button>
 
-          <div className="text-center space-y-3">
-            <div className="text-6xl mb-2">🧠</div>
-            <h2 className="font-display font-bold text-3xl">Memory</h2>
-            <p className="text-muted-foreground text-sm">Hitta alla matchande par så snabbt du kan!</p>
+          <div className="retro-panel">
+            <div className="retro-panel-header">🧠 MEMORY</div>
+            <div className="retro-panel-body text-center space-y-3">
+              <p className="text-sm text-muted-foreground">Hitta alla matchande par så snabbt du kan!</p>
+              <div className="retro-separator" />
+              <p className="font-pixel text-[9px] text-primary uppercase">Välj svårighetsgrad</p>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="font-display font-bold text-center text-sm text-muted-foreground uppercase tracking-wider">Välj svårighetsgrad</h3>
+          <div className="space-y-2">
             {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, cfg]) => (
               <button
                 key={key}
                 onClick={() => startGame(key)}
-                className="w-full rounded-xl border-2 border-border bg-card hover:border-primary/50 transition-colors p-4 text-left group"
+                className="w-full retro-panel hover:border-primary transition-colors text-left"
               >
-                <div className="flex items-center justify-between">
+                <div className="retro-panel-body flex items-center justify-between">
                   <div>
-                    <span className="font-display font-bold text-base group-hover:text-primary transition-colors">{cfg.label}</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">{cfg.pairs * 2} kort</p>
+                    <span className="font-bold text-sm">{cfg.label}</span>
+                    <p className="text-[10px] text-muted-foreground">{cfg.pairs * 2} kort</p>
                   </div>
                   {bestScores[key] ? (
                     <div className="text-right">
-                      <div className="text-xs text-muted-foreground">Ditt bästa</div>
-                      <div className="font-display font-bold text-primary text-sm">{bestScores[key]}p</div>
+                      <div className="text-[10px] text-muted-foreground">Bästa</div>
+                      <div className="font-bold text-primary text-sm">{bestScores[key]}p</div>
                     </div>
                   ) : null}
                 </div>
@@ -274,19 +274,18 @@ export function MemoryGame({ onBack, username }: Props) {
             ))}
           </div>
 
-          <Button
-            variant="outline"
-            className="w-full font-display gap-2"
+          <button
+            className="retro-btn w-full justify-center"
             onClick={() => { setShowLeaderboard(true); fetchLeaderboard(leaderboardDiff); }}
           >
-            <Medal className="w-4 h-4" /> Visa topplista
-          </Button>
+            🏆 Visa topplista
+          </button>
 
           {!username && (
-            <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">
-                Lägg till <code className="bg-muted px-1 rounded font-mono text-foreground">?usr=DittNamn</code> i URL:en för att spara poäng på topplistan
-              </p>
+            <div className="retro-panel">
+              <div className="retro-panel-body text-center text-xs text-muted-foreground">
+                Lägg till <code className="text-primary bg-background px-1">?usr=DittNamn</code> i URL:en för att spara poäng
+              </div>
             </div>
           )}
         </div>
