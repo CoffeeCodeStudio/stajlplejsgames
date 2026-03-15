@@ -269,7 +269,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     const nextDrawer = players[nextIdx];
 
     // If next drawer is me, show word picker
-    if (nextDrawer.user_id === user?.id) {
+    if (nextDrawer.user_id === guestId) {
       const choices = [];
       const used = new Set<string>();
       while (choices.length < 3) {
