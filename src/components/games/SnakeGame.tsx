@@ -422,25 +422,19 @@ export function SnakeGame({ onBack, username }: Props) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="container px-4 py-4 max-w-2xl mx-auto space-y-3">
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => { endGame(); setGameState("menu"); }} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Avsluta
-          </Button>
-          <div className="flex items-center gap-4 text-sm font-display">
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="w-3.5 h-3.5" /> {formatTime(seconds)}
-            </span>
-            <span className="flex items-center gap-1 text-destructive">
-              <Apple className="w-3.5 h-3.5" /> {applesEaten}
-            </span>
+          <button onClick={() => { endGame(); setGameState("menu"); }} className="retro-btn text-[10px]">← Avsluta</button>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
+            <span className="text-destructive">🍎 {applesEaten}</span>
             <span className="text-primary font-bold">{score}p</span>
           </div>
         </div>
 
         <div className="flex justify-center">
           <div
-            className="rounded-lg border-2 border-border overflow-hidden shadow-lg"
+            className="border-2 border-border overflow-hidden"
             style={{ width: canvasSize, height: canvasSize }}
           >
             <canvas
@@ -456,32 +450,24 @@ export function SnakeGame({ onBack, username }: Props) {
         <div className="flex justify-center md:hidden">
           <div className="grid grid-cols-3 gap-1 w-36">
             <div />
-            <Button variant="outline" size="sm" className="aspect-square p-0"
+            <button className="retro-btn aspect-square flex items-center justify-center"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("UP"); }}
-              onClick={() => handleDirection("UP")}>
-              <ArrowUp className="w-5 h-5" />
-            </Button>
+              onClick={() => handleDirection("UP")}>▲</button>
             <div />
-            <Button variant="outline" size="sm" className="aspect-square p-0"
+            <button className="retro-btn aspect-square flex items-center justify-center"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("LEFT"); }}
-              onClick={() => handleDirection("LEFT")}>
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <Button variant="outline" size="sm" className="aspect-square p-0"
+              onClick={() => handleDirection("LEFT")}>◄</button>
+            <button className="retro-btn aspect-square flex items-center justify-center"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("DOWN"); }}
-              onClick={() => handleDirection("DOWN")}>
-              <ArrowDown className="w-5 h-5" />
-            </Button>
-            <Button variant="outline" size="sm" className="aspect-square p-0"
+              onClick={() => handleDirection("DOWN")}>▼</button>
+            <button className="retro-btn aspect-square flex items-center justify-center"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("RIGHT"); }}
-              onClick={() => handleDirection("RIGHT")}>
-              <ArrowRightIcon className="w-5 h-5" />
-            </Button>
+              onClick={() => handleDirection("RIGHT")}>►</button>
           </div>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground font-display hidden md:block">
-          Använd piltangenterna eller WASD för att styra
+        <p className="text-center text-[10px] text-muted-foreground hidden md:block">
+          Piltangenter eller WASD för att styra
         </p>
       </div>
     </div>
