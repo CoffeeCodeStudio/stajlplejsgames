@@ -478,12 +478,12 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                 </div>
               )}
 
-              {/* Canvas — fills remaining space, no scroll */}
+              {/* Canvas — fills all remaining space, aspect-ratio preserved by container */}
               {lobby?.status === "playing" && (
-                <div className="flex-1 relative min-h-0" ref={containerRef}>
+                <div className="flex-1 relative min-h-0 bg-muted/20" ref={containerRef}>
                   <canvas
                     ref={canvasRef}
-                    className="absolute inset-0 w-full h-full"
+                    className="absolute inset-0 w-full h-full block"
                     style={{
                       cursor: isDrawer ? "crosshair" : "default",
                       touchAction: "none",
