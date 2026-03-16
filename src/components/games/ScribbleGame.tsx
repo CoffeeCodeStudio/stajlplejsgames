@@ -407,9 +407,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
           )}
 
           {/* Main content: canvas + sidebar */}
-          <div className={`flex-1 flex overflow-hidden min-h-0 ${isMobile ? "flex-col" : "flex-row"}`}>
-            {/* Canvas section */}
-            <div className={`flex-1 flex flex-col min-w-0 min-h-0 ${isMobile && mobileTab !== "canvas" && lobby?.status === "playing" ? "hidden" : ""}`}>
+          <div className={`flex-1 flex overflow-hidden min-h-0 ${isMobile ? "flex-col" : ""}`}>
+            {/* Canvas section — takes maximum space */}
+            <div className={`flex flex-col min-w-0 min-h-0 ${isMobile ? "flex-1" : "flex-1"} ${isMobile && mobileTab !== "canvas" && lobby?.status === "playing" ? "hidden" : ""}`}>
               {/* Toolbar */}
               {isDrawer && (
                 <div className="flex items-center gap-1 p-1.5 border-b border-border bg-card overflow-x-auto scrollbar-none shrink-0">
