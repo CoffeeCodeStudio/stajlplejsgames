@@ -366,9 +366,9 @@ export function MemoryGame({ onBack, username }: Props) {
         </div>
 
         <div
-          className="grid gap-2 mx-auto"
+          className="grid gap-[6px] mx-auto w-full max-w-md px-1"
           style={{
-            gridTemplateColumns: `repeat(${config.cols}, 80px)`,
+            gridTemplateColumns: `repeat(${config.cols}, 1fr)`,
           }}
         >
           {cards.map(card => (
@@ -376,7 +376,7 @@ export function MemoryGame({ onBack, username }: Props) {
               key={card.id}
               onClick={() => handleCardClick(card.id)}
               className={`
-                border-2 text-3xl font-bold transition-all duration-200
+                aspect-square border-2 text-2xl sm:text-3xl font-bold transition-all duration-200 w-full
                 ${card.matched
                   ? "border-primary/40 bg-primary/10 opacity-50"
                   : card.flipped
@@ -384,13 +384,12 @@ export function MemoryGame({ onBack, username }: Props) {
                     : "border-border bg-muted hover:border-primary/50 cursor-pointer hover:bg-muted/80"
                 }
               `}
-              style={{ width: 80, height: 80 }}
               disabled={card.matched}
             >
               {card.flipped || card.matched ? (
                 <span style={{ color: card.color, textShadow: `0 0 10px ${card.color}` }}>{card.emoji}</span>
               ) : (
-                <span className="text-muted-foreground text-lg font-pixel">?</span>
+                <span className="text-muted-foreground text-base sm:text-lg font-pixel">?</span>
               )}
             </button>
           ))}
