@@ -513,10 +513,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
               )}
             </div>
 
-            {/* Sidebar / Chat panel */}
+            {/* Sidebar — narrow overlay-style on desktop, tab on mobile */}
             <div className={`${isMobile
               ? (mobileTab === "chat" || lobby?.status !== "playing" ? "flex flex-col flex-1 min-h-0" : "hidden")
-              : "w-56 border-l border-border flex flex-col shrink-0"
+              : "w-48 border-l border-border flex flex-col shrink-0"
             } bg-card`}>
               {/* Scoreboard */}
               <div className="border-b border-border shrink-0">
