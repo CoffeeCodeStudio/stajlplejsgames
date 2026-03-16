@@ -70,32 +70,33 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     guessEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [guesses]);
 
-  // Canvas resize with DPR handling — preserves drawing content
+  // Canvas resize — syncs internal resolution to CSS display size × DPR
   const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-    const newW = Math.round(rect.width * dpr);
-    const newH = Math.round(rect.height * dpr);
-    if (canvas.width === newW && canvas.height === newH) return;
-    canvas.width = newW;
-    canvas.height = newH;
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    if (cssW === 0 || cssH === 0) return;
+    const bufW = Math.round(cssW * dpr);
+    const bufH = Math.round(cssH * dpr);
+    if (canvas.width === bufW && canvas.height === bufH) return;
+    canvas.width = bufW;
+    canvas.height = bufH;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.scale(dpr, dpr);
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.fillRect(0, 0, cssW, cssH);
     }
   }, []);
 
   useEffect(() => {
     resizeCanvas();
-    const container = containerRef.current;
-    if (!container) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const ro = new ResizeObserver(() => resizeCanvas());
-    ro.observe(container);
+    ro.observe(canvas);
     return () => ro.disconnect();
   }, [resizeCanvas]);
 
@@ -153,20 +154,13 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
   }, []);
 
-  // Precise coordinate mapping — accounts for DPR correctly
+  // Precise coordinate mapping using offsetX/offsetY — native to pointer target, zero drift
   const getPos = useCallback((e: React.PointerEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+    return { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
   }, []);
 
   // RAF flush — draws all pending points in one frame
@@ -413,9 +407,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
           )}
 
           {/* Main content: canvas + sidebar */}
-          <div className={`flex-1 flex overflow-hidden min-h-0 ${isMobile ? "flex-col" : "flex-row"}`}>
-            {/* Canvas section */}
-            <div className={`flex-1 flex flex-col min-w-0 min-h-0 ${isMobile && mobileTab !== "canvas" && lobby?.status === "playing" ? "hidden" : ""}`}>
+          <div className={`flex-1 flex overflow-hidden min-h-0 ${isMobile ? "flex-col" : ""}`}>
+            {/* Canvas section — takes maximum space */}
+            <div className={`flex flex-col min-w-0 min-h-0 ${isMobile ? "flex-1" : "flex-1"} ${isMobile && mobileTab !== "canvas" && lobby?.status === "playing" ? "hidden" : ""}`}>
               {/* Toolbar */}
               {isDrawer && (
                 <div className="flex items-center gap-1 p-1.5 border-b border-border bg-card overflow-x-auto scrollbar-none shrink-0">
@@ -484,12 +478,12 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                 </div>
               )}
 
-              {/* Canvas — fills remaining space, no scroll */}
+              {/* Canvas — fills all remaining space, aspect-ratio preserved by container */}
               {lobby?.status === "playing" && (
-                <div className="flex-1 relative min-h-0" ref={containerRef}>
+                <div className="flex-1 relative min-h-0 bg-muted/20" ref={containerRef}>
                   <canvas
                     ref={canvasRef}
-                    className="absolute inset-0 w-full h-full"
+                    className="absolute inset-0 w-full h-full block"
                     style={{
                       cursor: isDrawer ? "crosshair" : "default",
                       touchAction: "none",
@@ -519,10 +513,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
               )}
             </div>
 
-            {/* Sidebar / Chat panel */}
+            {/* Sidebar — narrow overlay-style on desktop, tab on mobile */}
             <div className={`${isMobile
               ? (mobileTab === "chat" || lobby?.status !== "playing" ? "flex flex-col flex-1 min-h-0" : "hidden")
-              : "w-56 border-l border-border flex flex-col shrink-0"
+              : "w-48 border-l border-border flex flex-col shrink-0"
             } bg-card`}>
               {/* Scoreboard */}
               <div className="border-b border-border shrink-0">
