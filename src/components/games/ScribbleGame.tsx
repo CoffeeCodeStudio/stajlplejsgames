@@ -154,20 +154,13 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
   }, []);
 
-  // Precise coordinate mapping — accounts for DPR correctly
+  // Precise coordinate mapping using offsetX/offsetY — native to pointer target, zero drift
   const getPos = useCallback((e: React.PointerEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+    return { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
   }, []);
 
   // RAF flush — draws all pending points in one frame
