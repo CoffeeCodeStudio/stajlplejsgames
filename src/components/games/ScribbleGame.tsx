@@ -70,32 +70,33 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     guessEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [guesses]);
 
-  // Canvas resize with DPR handling — preserves drawing content
+  // Canvas resize — syncs internal resolution to CSS display size × DPR
   const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-    const newW = Math.round(rect.width * dpr);
-    const newH = Math.round(rect.height * dpr);
-    if (canvas.width === newW && canvas.height === newH) return;
-    canvas.width = newW;
-    canvas.height = newH;
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    if (cssW === 0 || cssH === 0) return;
+    const bufW = Math.round(cssW * dpr);
+    const bufH = Math.round(cssH * dpr);
+    if (canvas.width === bufW && canvas.height === bufH) return;
+    canvas.width = bufW;
+    canvas.height = bufH;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.scale(dpr, dpr);
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.fillRect(0, 0, cssW, cssH);
     }
   }, []);
 
   useEffect(() => {
     resizeCanvas();
-    const container = containerRef.current;
-    if (!container) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const ro = new ResizeObserver(() => resizeCanvas());
-    ro.observe(container);
+    ro.observe(canvas);
     return () => ro.disconnect();
   }, [resizeCanvas]);
 
