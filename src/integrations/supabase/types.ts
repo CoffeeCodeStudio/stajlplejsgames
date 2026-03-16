@@ -409,6 +409,44 @@ export type Database = {
         }
         Relationships: []
       }
+      memory_events: {
+        Row: {
+          card_a_id: number | null
+          card_b_id: number | null
+          created_at: string
+          event_at: string
+          event_type: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          card_a_id?: number | null
+          card_b_id?: number | null
+          created_at?: string
+          event_at?: string
+          event_type: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          card_a_id?: number | null
+          card_b_id?: number | null
+          created_at?: string
+          event_at?: string
+          event_type?: string
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "memory_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memory_highscores: {
         Row: {
           avatar_url: string | null
@@ -441,6 +479,45 @@ export type Database = {
           score?: number
           time_seconds?: number
           user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      memory_sessions: {
+        Row: {
+          created_at: string
+          difficulty: string
+          finished_at: string | null
+          id: string
+          is_valid: boolean
+          pairs: number
+          score: number | null
+          session_token: string
+          started_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: string
+          finished_at?: string | null
+          id?: string
+          is_valid?: boolean
+          pairs?: number
+          score?: number | null
+          session_token?: string
+          started_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: string
+          finished_at?: string | null
+          id?: string
+          is_valid?: boolean
+          pairs?: number
+          score?: number | null
+          session_token?: string
+          started_at?: string
           username?: string
         }
         Relationships: []

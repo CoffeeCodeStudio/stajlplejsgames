@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, RotateCcw, Trophy, Clock, MousePointerClick, Medal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const SYMBOLS = [
@@ -81,6 +79,24 @@ interface HighscoreEntry {
   created_at: string;
 }
 
+// ── Edge function helper ──
+async function callMemoryApi(body: Record<string, unknown>) {
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const res = await fetch(
+    `https://${projectId}.supabase.co/functions/v1/memory-game`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: anonKey,
+      },
+      body: JSON.stringify(body),
+    }
+  );
+  return res.json();
+}
+
 interface Props {
   onBack: () => void;
   username: string | null;
@@ -97,7 +113,7 @@ export function MemoryGame({ onBack, username }: Props) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboard, setLeaderboard] = useState<HighscoreEntry[]>([]);
   const [leaderboardDiff, setLeaderboardDiff] = useState<Difficulty>("medium");
-  const [scoreSaved, setScoreSaved] = useState(false);
+  const [serverResult, setServerResult] = useState<{ valid: boolean; score: number; moves: number; time_seconds: number } | null>(null);
   const [bestScores, setBestScores] = useState<Record<Difficulty, number>>(() => {
     try {
       return JSON.parse(localStorage.getItem("memory-best") || "{}");
@@ -105,10 +121,11 @@ export function MemoryGame({ onBack, username }: Props) {
   });
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockRef = useRef(false);
+  const sessionTokenRef = useRef<string | null>(null);
 
   const totalPairs = difficulty ? DIFFICULTY_CONFIG[difficulty].pairs : 0;
 
-  const startGame = useCallback((diff: Difficulty) => {
+  const startGame = useCallback(async (diff: Difficulty) => {
     setDifficulty(diff);
     setCards(buildDeck(DIFFICULTY_CONFIG[diff].pairs));
     setFlippedIds([]);
@@ -116,8 +133,53 @@ export function MemoryGame({ onBack, username }: Props) {
     setMatchedPairs(0);
     setSeconds(0);
     setGameOver(false);
-    setScoreSaved(false);
+    setServerResult(null);
     lockRef.current = false;
+    sessionTokenRef.current = null;
+
+    // Create server session if username exists
+    if (username) {
+      try {
+        const res = await callMemoryApi({
+          action: "start",
+          username,
+          difficulty: diff,
+        });
+        if (res.session_token) {
+          sessionTokenRef.current = res.session_token;
+        }
+      } catch (e) {
+        console.warn("Failed to create game session:", e);
+      }
+    }
+  }, [username]);
+
+  const sendEvent = useCallback(async (eventType: string, cardAId?: number, cardBId?: number) => {
+    if (!sessionTokenRef.current) return;
+    try {
+      await callMemoryApi({
+        action: "event",
+        session_token: sessionTokenRef.current,
+        event_type: eventType,
+        card_a_id: cardAId,
+        card_b_id: cardBId,
+      });
+    } catch (e) {
+      console.warn("Failed to send event:", e);
+    }
+  }, []);
+
+  const finishGame = useCallback(async () => {
+    if (!sessionTokenRef.current) return;
+    try {
+      const res = await callMemoryApi({
+        action: "finish",
+        session_token: sessionTokenRef.current,
+      });
+      setServerResult(res);
+    } catch (e) {
+      console.warn("Failed to finish game:", e);
+    }
   }, []);
 
   const fetchLeaderboard = useCallback(async (diff: Difficulty) => {
@@ -129,20 +191,6 @@ export function MemoryGame({ onBack, username }: Props) {
       .limit(20);
     setLeaderboard((data as HighscoreEntry[]) || []);
   }, []);
-
-  const saveScore = useCallback(async (score: number, movesCount: number, timeSec: number, diff: Difficulty) => {
-    if (!username || scoreSaved) return;
-    setScoreSaved(true);
-    await supabase.from('memory_highscores').insert({
-      user_id: '00000000-0000-0000-0000-000000000000',
-      username: username,
-      avatar_url: null,
-      score,
-      moves: movesCount,
-      time_seconds: timeSec,
-      difficulty: diff,
-    });
-  }, [username, scoreSaved]);
 
   // Timer
   useEffect(() => {
@@ -165,7 +213,8 @@ export function MemoryGame({ onBack, username }: Props) {
           setBestScores(next);
           localStorage.setItem("memory-best", JSON.stringify(next));
         }
-        saveScore(score, moves, seconds, difficulty);
+        // Finish on server (validates & saves score)
+        finishGame();
         fetchLeaderboard(difficulty);
       }
     }
@@ -189,6 +238,8 @@ export function MemoryGame({ onBack, username }: Props) {
       const emojiB = card.emoji;
 
       if (cardA.emoji === emojiB) {
+        // Send pair_found event to server
+        sendEvent("pair_found", a, b);
         setTimeout(() => {
           setCards(prev => prev.map(c =>
             c.id === a || c.id === b ? { ...c, matched: true, flipped: true } : c
@@ -198,6 +249,8 @@ export function MemoryGame({ onBack, username }: Props) {
           lockRef.current = false;
         }, 400);
       } else {
+        // Send mismatch event to server
+        sendEvent("mismatch", a, b);
         setTimeout(() => {
           setCards(prev => prev.map(c =>
             c.id === a || c.id === b ? { ...c, flipped: false } : c
@@ -313,8 +366,9 @@ export function MemoryGame({ onBack, username }: Props) {
 
   // Game over screen
   if (gameOver) {
+    const displayScore = serverResult?.valid ? serverResult.score : score;
     const best = bestScores[difficulty] || 0;
-    const isNewBest = score >= best;
+    const isNewBest = displayScore >= best;
     return (
       <div className="flex-1 overflow-y-auto">
         <div className="px-3 py-4 space-y-3 text-center">
@@ -324,20 +378,26 @@ export function MemoryGame({ onBack, username }: Props) {
               <p className="text-sm text-muted-foreground">Du hittade alla {totalPairs} par!</p>
               <div className="grid grid-cols-3 gap-2">
                 <div className="retro-inset p-2">
-                  <div className="font-bold text-primary text-lg">{score}p</div>
+                  <div className="font-bold text-primary text-lg">{displayScore}p</div>
                   <div className="text-[10px] text-muted-foreground">Poäng</div>
                 </div>
                 <div className="retro-inset p-2">
-                  <div className="font-bold text-lg">{moves}</div>
+                  <div className="font-bold text-lg">{serverResult?.moves ?? moves}</div>
                   <div className="text-[10px] text-muted-foreground">Drag</div>
                 </div>
                 <div className="retro-inset p-2">
-                  <div className="font-bold text-lg">{formatTime(seconds)}</div>
+                  <div className="font-bold text-lg">{formatTime(serverResult?.time_seconds ?? seconds)}</div>
                   <div className="text-[10px] text-muted-foreground">Tid</div>
                 </div>
               </div>
               {isNewBest && <p className="font-pixel text-[9px] text-primary animate-pulse">⭐ NYTT REKORD! ⭐</p>}
+              {serverResult && !serverResult.valid && (
+                <p className="text-[10px] text-destructive">⚠ Sessionen kunde inte verifieras</p>
+              )}
               {!username && <p className="text-[10px] text-muted-foreground">Poäng ej sparad — lägg till ?usr=Namn</p>}
+              {username && serverResult?.valid && (
+                <p className="text-[10px] text-green-400">✓ Poäng verifierad och sparad på servern</p>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap gap-2 justify-center">
