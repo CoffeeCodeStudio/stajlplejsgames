@@ -487,19 +487,19 @@ export function SnakeGame({ onBack, username }: Props) {
 
         {/* Touch controls */}
         <div className="flex justify-center md:hidden">
-          <div className="grid grid-cols-3 gap-1 w-36">
+          <div className="grid grid-cols-3 gap-3 w-56 sm:w-64">
             <div />
-            <button className="retro-btn aspect-square flex items-center justify-center text-xs"
+            <button className="retro-btn aspect-square flex items-center justify-center text-lg h-16 sm:h-20"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("UP"); }}
               onClick={() => handleDirection("UP")}>▲</button>
             <div />
-            <button className="retro-btn aspect-square flex items-center justify-center text-xs"
+            <button className="retro-btn aspect-square flex items-center justify-center text-lg h-16 sm:h-20"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("LEFT"); }}
               onClick={() => handleDirection("LEFT")}>◄</button>
-            <button className="retro-btn aspect-square flex items-center justify-center text-xs"
+            <button className="retro-btn aspect-square flex items-center justify-center text-lg h-16 sm:h-20"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("DOWN"); }}
               onClick={() => handleDirection("DOWN")}>▼</button>
-            <button className="retro-btn aspect-square flex items-center justify-center text-xs"
+            <button className="retro-btn aspect-square flex items-center justify-center text-lg h-16 sm:h-20"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("RIGHT"); }}
               onClick={() => handleDirection("RIGHT")}>►</button>
           </div>
