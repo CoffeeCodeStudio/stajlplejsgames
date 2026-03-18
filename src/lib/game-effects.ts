@@ -94,5 +94,26 @@ export function playGameOverSound() {
     });
   } catch {
     // Audio not available
+}
+
+/** Short 8-bit "pling" for collecting an item (e.g. apple) */
+export function playPickupSound() {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(660, now);
+    osc.frequency.exponentialRampToValueAtTime(1320, now + 0.06);
+    gain.gain.setValueAtTime(0.13, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.1);
+  } catch {
+    // Audio not available
   }
+}
 }

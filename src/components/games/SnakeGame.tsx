@@ -241,6 +241,7 @@ export function SnakeGame({ onBack, username }: Props) {
       scoreRef.current += 10 + Math.floor(applesRef.current / 5) * 5;
       setScore(scoreRef.current);
       setApplesEaten(applesRef.current);
+      playPickupSound();
       appleRef.current = getRandomPosition(newSnake);
 
       speedRef.current = Math.max(MIN_SPEED, speedRef.current - SPEED_INCREASE);
