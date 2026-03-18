@@ -134,6 +134,7 @@ export function playFlipSound() {
     osc.stop(now + 0.04);
   } catch {
     // Audio not available
+  }
 }
 
 /** Happy 8-bit match sound – two ascending beeps */
@@ -156,5 +157,4 @@ export function playMatchSound() {
   } catch {
     // Audio not available
   }
-}
 }
