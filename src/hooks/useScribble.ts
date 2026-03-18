@@ -47,6 +47,27 @@ export function useScribbleLobbies(guestId: string, guestUsername: string | null
 
   const fetchLobbies = useCallback(async () => {
     try {
+      // Clean up stale lobbies (no activity for 30+ minutes)
+      const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      const { data: staleLobbies } = await supabase
+        .from('scribble_lobbies')
+        .select('id')
+        .in('status', ['waiting', 'playing'])
+        .lt('updated_at', thirtyMinAgo);
+
+      if (staleLobbies && staleLobbies.length > 0) {
+        const staleIds = staleLobbies.map(l => l.id);
+        // Delete players and guesses first, then mark lobby as finished and delete
+        await supabase.from('scribble_guesses').delete().in('lobby_id', staleIds);
+        await supabase.from('scribble_players').delete().in('lobby_id', staleIds);
+        await supabase
+          .from('scribble_lobbies')
+          .update({ status: 'finished' })
+          .in('id', staleIds);
+        await supabase.from('scribble_lobbies').delete().in('id', staleIds);
+        console.log(`Cleaned up ${staleIds.length} stale lobby(ies)`);
+      }
+
       const { data, error } = await supabase
         .from('scribble_lobbies')
         .select('*')
