@@ -158,12 +158,16 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
   }, []);
 
-  // Precise coordinate mapping using getBoundingClientRect — reliable even with pointer capture
   const getPos = useCallback((e: React.PointerEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const scaleX = canvas.clientWidth / rect.width;
+    const scaleY = canvas.clientHeight / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    };
   }, []);
 
   // RAF flush — draws all pending points in one frame
