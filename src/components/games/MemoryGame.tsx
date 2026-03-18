@@ -2,29 +2,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-const SYMBOLS = [
-  { char: "★", color: "#ffcc00" },
-  { char: "♥", color: "#ff3366" },
-  { char: "♠", color: "#00ff88" },
-  { char: "♣", color: "#44ddff" },
-  { char: "♦", color: "#ff6622" },
-  { char: "☺", color: "#ffee55" },
-  { char: "☽", color: "#cc99ff" },
-  { char: "♪", color: "#ff44aa" },
-  { char: "★", color: "#ff8800" },
-  { char: "♥", color: "#ff0044" },
-  { char: "♠", color: "#66ffcc" },
-  { char: "♣", color: "#00ccff" },
-  { char: "♦", color: "#ffaa00" },
-  { char: "☺", color: "#88ff44" },
-  { char: "☽", color: "#aa88ff" },
-  { char: "♪", color: "#ff66cc" },
-];
+const DIFFICULTY_SYMBOLS: Record<Difficulty, string[]> = {
+  easy: ["💾", "📟", "📺", "🕹️", "💿", "☎️"],
+  medium: ["💾", "📟", "📺", "🕹️", "💿", "☎️", "📼", "🖥️"],
+  hard: ["💾", "📟", "📺", "🕹️", "💿", "☎️", "📼", "🖥️", "🎮", "📡", "🔋", "💡"],
+};
 
 interface Card {
   id: number;
   emoji: string;
-  color: string;
   flipped: boolean;
   matched: boolean;
 }
@@ -46,11 +32,11 @@ function shuffleArray<T>(arr: T[]): T[] {
   return a;
 }
 
-function buildDeck(pairs: number): Card[] {
-  const symbols = shuffleArray(SYMBOLS).slice(0, pairs);
+function buildDeck(difficulty: Difficulty): Card[] {
+  const symbols = DIFFICULTY_SYMBOLS[difficulty];
   const cards = symbols.flatMap((s, i) => [
-    { id: i * 2, emoji: s.char, color: s.color, flipped: false, matched: false },
-    { id: i * 2 + 1, emoji: s.char, color: s.color, flipped: false, matched: false },
+    { id: i * 2, emoji: s, flipped: false, matched: false },
+    { id: i * 2 + 1, emoji: s, flipped: false, matched: false },
   ]);
   return shuffleArray(cards);
 }
