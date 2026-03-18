@@ -113,7 +113,7 @@ export function MemoryGame({ onBack, username }: Props) {
 
   const startGame = useCallback(async (diff: Difficulty) => {
     setDifficulty(diff);
-    setCards(buildDeck(DIFFICULTY_CONFIG[diff].pairs));
+    setCards(buildDeck(diff));
     setFlippedIds([]);
     setMoves(0);
     setMatchedPairs(0);
