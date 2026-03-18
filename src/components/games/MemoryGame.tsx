@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { fireConfetti, playVictorySound, playFlipSound } from "@/lib/game-effects";
+import { fireConfetti, playVictorySound, playFlipSound, playMatchSound } from "@/lib/game-effects";
 
 const DIFFICULTY_SYMBOLS: Record<Difficulty, string[]> = {
   easy: ["💾", "📟", "📺", "🕹️", "💿", "☎️"],
@@ -231,6 +231,7 @@ export function MemoryGame({ onBack, username }: Props) {
       if (cardA.emoji === emojiB) {
         // Send pair_found event to server
         sendEvent("pair_found", a, b);
+        playMatchSound();
         setTimeout(() => {
           setCards(prev => prev.map(c =>
             c.id === a || c.id === b ? { ...c, matched: true, flipped: true } : c
