@@ -47,7 +47,11 @@ export function GamesSection({ username }: GamesSectionProps) {
   }
 
   if (activeLobbyId) {
-    return <ScribbleGame lobbyId={activeLobbyId} onLeave={() => { setActiveLobbyId(null); setView("scribble-lobbies"); }} guestId={guestId} guestUsername={username} />;
+    return (
+      <div className="fixed inset-0 z-50 bg-background">
+        <ScribbleGame lobbyId={activeLobbyId} onLeave={() => { setActiveLobbyId(null); setView("scribble-lobbies"); }} guestId={guestId} guestUsername={username} />
+      </div>
+    );
   }
 
   if (view === "scribble-lobbies") {
