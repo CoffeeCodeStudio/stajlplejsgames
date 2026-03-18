@@ -219,6 +219,7 @@ export function MemoryGame({ onBack, username }: Props) {
     const newFlipped = [...flippedIds, id];
     setCards(prev => prev.map(c => c.id === id ? { ...c, flipped: true } : c));
     setFlippedIds(newFlipped);
+    playFlipSound();
 
     if (newFlipped.length === 2) {
       setMoves(m => m + 1);

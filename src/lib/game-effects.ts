@@ -117,3 +117,22 @@ export function playPickupSound() {
     // Audio not available
   }
 }
+
+/** Subtle card-flip tick sound */
+export function playFlipSound() {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.value = 1200;
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.04);
+  } catch {
+    // Audio not available
+  }
+}
