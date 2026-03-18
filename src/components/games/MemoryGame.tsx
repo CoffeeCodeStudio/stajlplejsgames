@@ -422,7 +422,7 @@ export function MemoryGame({ onBack, username }: Props) {
               key={card.id}
               onClick={() => handleCardClick(card.id)}
               className={`
-                aspect-square border-2 text-2xl sm:text-3xl font-bold transition-all duration-200 w-full
+                aspect-square border-2 text-3xl sm:text-4xl font-bold transition-all duration-200 w-full flex items-center justify-center
                 ${card.matched
                   ? "border-primary/40 bg-primary/10 opacity-50"
                   : card.flipped
@@ -433,7 +433,7 @@ export function MemoryGame({ onBack, username }: Props) {
               disabled={card.matched}
             >
               {card.flipped || card.matched ? (
-                <span style={{ color: card.color, textShadow: `0 0 10px ${card.color}` }}>{card.emoji}</span>
+                <span className="drop-shadow-lg" style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.4))" }}>{card.emoji}</span>
               ) : (
                 <span className="text-muted-foreground text-base sm:text-lg font-pixel">?</span>
               )}
