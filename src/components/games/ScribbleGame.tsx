@@ -345,6 +345,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     if (!guessText.trim()) return;
     const isCorrect = await submitGuess(guessText.trim());
     if (isCorrect) {
+      playCorrectSound();
+      fireConfetti();
       toast({ title: "🎉 Rätt svar!" });
       if (isDrawer || isCreator) {
         setTimeout(() => advanceTurn(), 2000);

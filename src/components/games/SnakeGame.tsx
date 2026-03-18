@@ -203,6 +203,8 @@ export function SnakeGame({ onBack, username }: Props) {
     if (finalScore > highScore) {
       setHighScore(finalScore);
       localStorage.setItem("snake-best", String(finalScore));
+      fireConfetti();
+      playVictorySound();
     }
 
     saveScore(finalScore, apples, seconds);

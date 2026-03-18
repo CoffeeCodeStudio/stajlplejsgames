@@ -193,6 +193,9 @@ export function MemoryGame({ onBack, username }: Props) {
       setGameOver(true);
       if (timerRef.current) clearInterval(timerRef.current);
       const score = calcScore(moves, seconds, totalPairs);
+      // Celebrate!
+      fireConfetti();
+      playVictorySound();
       if (difficulty) {
         const prev = bestScores[difficulty] || 0;
         if (score > prev) {
