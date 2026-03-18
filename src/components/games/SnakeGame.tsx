@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fireConfetti, playVictorySound } from "@/lib/game-effects";
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 16;
@@ -202,6 +203,8 @@ export function SnakeGame({ onBack, username }: Props) {
     if (finalScore > highScore) {
       setHighScore(finalScore);
       localStorage.setItem("snake-best", String(finalScore));
+      fireConfetti();
+      playVictorySound();
     }
 
     saveScore(finalScore, apples, seconds);

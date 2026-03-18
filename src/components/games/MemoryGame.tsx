@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { fireConfetti, playVictorySound } from "@/lib/game-effects";
 
 const DIFFICULTY_SYMBOLS: Record<Difficulty, string[]> = {
   easy: ["💾", "📟", "📺", "🕹️", "💿", "☎️"],
@@ -192,6 +193,9 @@ export function MemoryGame({ onBack, username }: Props) {
       setGameOver(true);
       if (timerRef.current) clearInterval(timerRef.current);
       const score = calcScore(moves, seconds, totalPairs);
+      // Celebrate!
+      fireConfetti();
+      playVictorySound();
       if (difficulty) {
         const prev = bestScores[difficulty] || 0;
         if (score > prev) {

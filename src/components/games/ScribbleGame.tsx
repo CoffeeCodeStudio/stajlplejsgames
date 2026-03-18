@@ -7,6 +7,7 @@ import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward,
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { playCorrectSound, fireConfetti } from "@/lib/game-effects";
 
 interface DrawPoint {
   x: number;
@@ -344,6 +345,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     if (!guessText.trim()) return;
     const isCorrect = await submitGuess(guessText.trim());
     if (isCorrect) {
+      playCorrectSound();
+      fireConfetti();
       toast({ title: "🎉 Rätt svar!" });
       if (isDrawer || isCreator) {
         setTimeout(() => advanceTurn(), 2000);
