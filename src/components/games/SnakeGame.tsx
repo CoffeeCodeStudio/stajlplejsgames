@@ -199,6 +199,7 @@ export function SnakeGame({ onBack, username }: Props) {
     setScore(finalScore);
     setApplesEaten(apples);
     setGameState("gameover");
+    playGameOverSound();
 
     if (finalScore > highScore) {
       setHighScore(finalScore);
