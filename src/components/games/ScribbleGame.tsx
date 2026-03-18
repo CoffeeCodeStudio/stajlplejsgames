@@ -591,6 +591,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                     onPointerDown={startDrawing}
                     onPointerMove={draw}
                     onPointerUp={stopDrawing}
+                    onPointerCancel={stopDrawing}
+                    onLostPointerCapture={() => stopDrawing()}
                     onPointerLeave={stopDrawing}
                   />
                 </div>
