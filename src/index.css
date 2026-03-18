@@ -215,6 +215,32 @@ body {
     padding: 8px;
   }
 
+  /* Arcade counter display */
+  .arcade-counter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: hsl(222 50% 8%);
+    border: 2px inset hsl(var(--panel-border));
+    padding: 3px 8px 2px;
+    min-width: 60px;
+  }
+
+  .arcade-counter-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 1px;
+  }
+
+  .arcade-counter-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    text-shadow: 0 0 6px currentColor, 0 0 12px currentColor;
+  }
+
   /* Separator */
   .retro-separator {
     height: 2px;

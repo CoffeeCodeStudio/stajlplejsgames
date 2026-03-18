@@ -407,12 +407,21 @@ export function MemoryGame({ onBack, username }: Props) {
   return (
     <div className="flex-1 flex flex-col">
       <div className="px-3 py-2 space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-1">
           <button onClick={onBack} className="retro-btn text-base">←</button>
-          <div className="flex items-center gap-4 text-base font-bold">
-            <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
-            <span className="text-muted-foreground">🖱 {moves} drag</span>
-            <span className="text-primary">{matchedPairs}/{totalPairs} par</span>
+          <div className="flex items-center gap-1">
+            <div className="arcade-counter">
+              <span className="arcade-counter-label">TIME</span>
+              <span className="arcade-counter-value text-[hsl(var(--online-green))]">{formatTime(seconds)}</span>
+            </div>
+            <div className="arcade-counter">
+              <span className="arcade-counter-label">MOVES</span>
+              <span className="arcade-counter-value text-[hsl(var(--away-orange))]">{moves}</span>
+            </div>
+            <div className="arcade-counter">
+              <span className="arcade-counter-label">PAIRS</span>
+              <span className="arcade-counter-value text-primary">{matchedPairs}/{totalPairs}</span>
+            </div>
           </div>
           <button onClick={() => startGame(difficulty)} className="retro-btn text-base">🔄</button>
         </div>
