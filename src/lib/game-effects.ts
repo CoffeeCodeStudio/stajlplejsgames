@@ -117,5 +117,3 @@ export function playPickupSound() {
     // Audio not available
   }
 }
-}
-}
