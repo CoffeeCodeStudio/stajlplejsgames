@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { fireConfetti, playVictorySound } from "@/lib/game-effects";
+import { fireConfetti, playVictorySound, playFlipSound } from "@/lib/game-effects";
 
 const DIFFICULTY_SYMBOLS: Record<Difficulty, string[]> = {
   easy: ["💾", "📟", "📺", "🕹️", "💿", "☎️"],
@@ -219,6 +219,7 @@ export function MemoryGame({ onBack, username }: Props) {
     const newFlipped = [...flippedIds, id];
     setCards(prev => prev.map(c => c.id === id ? { ...c, flipped: true } : c));
     setFlippedIds(newFlipped);
+    playFlipSound();
 
     if (newFlipped.length === 2) {
       setMoves(m => m + 1);
