@@ -73,3 +73,26 @@ export function playCorrectSound() {
     // Audio not available
   }
 }
+
+/** Retro game-over sound – descending chromatic buzz */
+export function playGameOverSound() {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    const notes = [440, 370, 311, 233]; // A4 → F#4 → Eb4 → Bb3
+
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.14, now + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + i * 0.15);
+      osc.stop(now + i * 0.15 + 0.2);
+    });
+  } catch {
+    // Audio not available
+  }
+}
