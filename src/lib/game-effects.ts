@@ -94,6 +94,7 @@ export function playGameOverSound() {
     });
   } catch {
     // Audio not available
+  }
 }
 
 /** Short 8-bit "pling" for collecting an item (e.g. apple) */
@@ -115,5 +116,6 @@ export function playPickupSound() {
   } catch {
     // Audio not available
   }
+}
 }
 }
