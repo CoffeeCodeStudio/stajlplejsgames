@@ -21,6 +21,9 @@ En spelmodul byggd för StajlPlejs — ett svenskt nostalgicommunity med 40 000 
 - Byggd med Lovable AI
 - Hostad via Lovable
 - Ingen förändring i StajlPlejs databas eller kod krävs
+  
+## Screenshot
+- ![StajlPlejs Game Zone](gameMenu.png)
 
 ## Byggd av
 [Coffee Code Studio](https://coffeecodestudio.se)
