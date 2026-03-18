@@ -2,29 +2,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-const SYMBOLS = [
-  { char: "★", color: "#ffcc00" },
-  { char: "♥", color: "#ff3366" },
-  { char: "♠", color: "#00ff88" },
-  { char: "♣", color: "#44ddff" },
-  { char: "♦", color: "#ff6622" },
-  { char: "☺", color: "#ffee55" },
-  { char: "☽", color: "#cc99ff" },
-  { char: "♪", color: "#ff44aa" },
-  { char: "★", color: "#ff8800" },
-  { char: "♥", color: "#ff0044" },
-  { char: "♠", color: "#66ffcc" },
-  { char: "♣", color: "#00ccff" },
-  { char: "♦", color: "#ffaa00" },
-  { char: "☺", color: "#88ff44" },
-  { char: "☽", color: "#aa88ff" },
-  { char: "♪", color: "#ff66cc" },
-];
+const DIFFICULTY_SYMBOLS: Record<Difficulty, string[]> = {
+  easy: ["💾", "📟", "📺", "🕹️", "💿", "☎️"],
+  medium: ["💾", "📟", "📺", "🕹️", "💿", "☎️", "📼", "🖥️"],
+  hard: ["💾", "📟", "📺", "🕹️", "💿", "☎️", "📼", "🖥️", "🎮", "📡", "🔋", "💡"],
+};
 
 interface Card {
   id: number;
   emoji: string;
-  color: string;
   flipped: boolean;
   matched: boolean;
 }
@@ -46,11 +32,11 @@ function shuffleArray<T>(arr: T[]): T[] {
   return a;
 }
 
-function buildDeck(pairs: number): Card[] {
-  const symbols = shuffleArray(SYMBOLS).slice(0, pairs);
+function buildDeck(difficulty: Difficulty): Card[] {
+  const symbols = DIFFICULTY_SYMBOLS[difficulty];
   const cards = symbols.flatMap((s, i) => [
-    { id: i * 2, emoji: s.char, color: s.color, flipped: false, matched: false },
-    { id: i * 2 + 1, emoji: s.char, color: s.color, flipped: false, matched: false },
+    { id: i * 2, emoji: s, flipped: false, matched: false },
+    { id: i * 2 + 1, emoji: s, flipped: false, matched: false },
   ]);
   return shuffleArray(cards);
 }
@@ -127,7 +113,7 @@ export function MemoryGame({ onBack, username }: Props) {
 
   const startGame = useCallback(async (diff: Difficulty) => {
     setDifficulty(diff);
-    setCards(buildDeck(DIFFICULTY_CONFIG[diff].pairs));
+    setCards(buildDeck(diff));
     setFlippedIds([]);
     setMoves(0);
     setMatchedPairs(0);
@@ -436,7 +422,7 @@ export function MemoryGame({ onBack, username }: Props) {
               key={card.id}
               onClick={() => handleCardClick(card.id)}
               className={`
-                aspect-square border-2 text-2xl sm:text-3xl font-bold transition-all duration-200 w-full
+                aspect-square border-2 text-3xl sm:text-4xl font-bold transition-all duration-200 w-full flex items-center justify-center
                 ${card.matched
                   ? "border-primary/40 bg-primary/10 opacity-50"
                   : card.flipped
@@ -447,7 +433,7 @@ export function MemoryGame({ onBack, username }: Props) {
               disabled={card.matched}
             >
               {card.flipped || card.matched ? (
-                <span style={{ color: card.color, textShadow: `0 0 10px ${card.color}` }}>{card.emoji}</span>
+                <span className="drop-shadow-lg" style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.4))" }}>{card.emoji}</span>
               ) : (
                 <span className="text-muted-foreground text-base sm:text-lg font-pixel">?</span>
               )}
