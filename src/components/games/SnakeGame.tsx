@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { fireConfetti, playVictorySound, playGameOverSound } from "@/lib/game-effects";
+import { fireConfetti, playVictorySound, playGameOverSound, playPickupSound } from "@/lib/game-effects";
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 16;
@@ -241,6 +241,7 @@ export function SnakeGame({ onBack, username }: Props) {
       scoreRef.current += 10 + Math.floor(applesRef.current / 5) * 5;
       setScore(scoreRef.current);
       setApplesEaten(applesRef.current);
+      playPickupSound();
       appleRef.current = getRandomPosition(newSnake);
 
       speedRef.current = Math.max(MIN_SPEED, speedRef.current - SPEED_INCREASE);
