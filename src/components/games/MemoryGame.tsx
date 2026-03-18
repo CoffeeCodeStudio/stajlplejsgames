@@ -231,6 +231,7 @@ export function MemoryGame({ onBack, username }: Props) {
       if (cardA.emoji === emojiB) {
         // Send pair_found event to server
         sendEvent("pair_found", a, b);
+        playMatchSound();
         setTimeout(() => {
           setCards(prev => prev.map(c =>
             c.id === a || c.id === b ? { ...c, matched: true, flipped: true } : c

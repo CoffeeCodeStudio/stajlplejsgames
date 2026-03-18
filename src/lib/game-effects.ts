@@ -134,5 +134,27 @@ export function playFlipSound() {
     osc.stop(now + 0.04);
   } catch {
     // Audio not available
+}
+
+/** Happy 8-bit match sound – two ascending beeps */
+export function playMatchSound() {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+
+    [987.77, 1318.5].forEach((freq, i) => { // B5 → E6
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.1, now + i * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.12);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + i * 0.1);
+      osc.stop(now + i * 0.1 + 0.12);
+    });
+  } catch {
+    // Audio not available
   }
+}
 }
