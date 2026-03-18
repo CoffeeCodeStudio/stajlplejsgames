@@ -155,11 +155,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.clientWidth / rect.width;
-    const scaleY = canvas.clientHeight / rect.height;
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
     };
   }, []);
 
