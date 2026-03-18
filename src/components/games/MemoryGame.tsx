@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { fireConfetti, playVictorySound } from "@/lib/game-effects";
 
 const DIFFICULTY_SYMBOLS: Record<Difficulty, string[]> = {
   easy: ["💾", "📟", "📺", "🕹️", "💿", "☎️"],
