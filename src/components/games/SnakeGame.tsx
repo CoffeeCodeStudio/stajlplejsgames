@@ -487,7 +487,7 @@ export function SnakeGame({ onBack, username }: Props) {
 
         {/* Touch controls */}
         <div className="flex justify-center md:hidden">
-          <div className="grid grid-cols-3 gap-4 w-60 sm:w-72">
+          <div className="grid grid-cols-3 gap-5 w-64 sm:w-80">
             <div />
             <button className="retro-btn aspect-square flex items-center justify-center text-lg h-16 sm:h-20"
               onTouchStart={(e) => { e.preventDefault(); handleDirection("UP"); }}
