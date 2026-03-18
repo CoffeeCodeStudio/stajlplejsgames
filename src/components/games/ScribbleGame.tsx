@@ -42,12 +42,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState("#000000");
   const [brushSize, setBrushSize] = useState(6);
   const [isEraser, setIsEraser] = useState(false);
   const [guessText, setGuessText] = useState("");
-  const [currentAction, setCurrentAction] = useState<DrawPoint[]>([]);
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
   const [wordChoices, setWordChoices] = useState<string[]>([]);
   const [showWordPicker, setShowWordPicker] = useState(false);
@@ -56,9 +54,12 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<"canvas" | "chat">("canvas");
 
-  // RAF-based smooth drawing
+  const isDrawingRef = useRef(false);
+  const activePointerIdRef = useRef<number | null>(null);
+  const currentStrokeRef = useRef<DrawPoint[]>([]);
   const pendingPoints = useRef<DrawPoint[]>([]);
   const rafId = useRef<number>(0);
+  const canvasMetricsRef = useRef({ cssWidth: 1, cssHeight: 1, dpr: 1 });
 
   const isDrawer = lobby?.current_drawer_id === guestId;
   const isCreator = lobby?.creator_id === guestId;
@@ -70,28 +71,155 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     guessEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [guesses]);
 
+  const applyCanvasDefaults = useCallback((ctx: CanvasRenderingContext2D) => {
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+  }, []);
+
   const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const rect = canvas.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, rect.width, rect.height);
+    if (rect.width <= 0 || rect.height <= 0) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const nextWidth = Math.max(1, Math.round(rect.width * dpr));
+    const nextHeight = Math.max(1, Math.round(rect.height * dpr));
+
+    canvasMetricsRef.current = { cssWidth: rect.width, cssHeight: rect.height, dpr };
+
+    if (canvas.width === nextWidth && canvas.height === nextHeight) return;
+
+    let snapshot: HTMLCanvasElement | null = null;
+    if (canvas.width > 0 && canvas.height > 0) {
+      snapshot = document.createElement("canvas");
+      snapshot.width = canvas.width;
+      snapshot.height = canvas.height;
+      const snapshotCtx = snapshot.getContext("2d");
+      if (snapshotCtx) {
+        snapshotCtx.drawImage(canvas, 0, 0);
+      }
     }
-  }, []);
+
+    canvas.width = nextWidth;
+    canvas.height = nextHeight;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, nextWidth, nextHeight);
+    ctx.scale(dpr, dpr);
+    applyCanvasDefaults(ctx);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    if (snapshot) {
+      ctx.drawImage(snapshot, 0, 0, snapshot.width, snapshot.height, 0, 0, rect.width, rect.height);
+    }
+  }, [applyCanvasDefaults]);
 
   useEffect(() => {
     resizeCanvas();
+    const container = containerRef.current;
+    if (!container) return;
+
+    const ro = new ResizeObserver(() => resizeCanvas());
+    ro.observe(container);
+    window.addEventListener("resize", resizeCanvas);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", resizeCanvas);
+    };
+  }, [resizeCanvas]);
+
+  const drawStroke = useCallback((points: DrawPoint[]) => {
+    const canvas = canvasRef.current;
+    if (!canvas || points.length === 0) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    applyCanvasDefaults(ctx);
+
+    const { cssWidth, cssHeight } = canvasMetricsRef.current;
+    const useNormalizedCoords = points.every((p) => p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1);
+    const toCanvasPoint = (p: DrawPoint) =>
+      useNormalizedCoords
+        ? { x: p.x * cssWidth, y: p.y * cssHeight }
+        : { x: p.x, y: p.y };
+
+    if (points.length === 1) {
+      const p = toCanvasPoint(points[0]);
+      ctx.fillStyle = points[0].color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(points[0].size / 2, 1), 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+
+    for (let i = 1; i < points.length; i++) {
+      const prev = toCanvasPoint(points[i - 1]);
+      const curr = toCanvasPoint(points[i]);
+      ctx.beginPath();
+      ctx.strokeStyle = points[i].color;
+      ctx.lineWidth = points[i].size;
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(curr.x, curr.y);
+      ctx.stroke();
+    }
+  }, [applyCanvasDefaults]);
+
+  const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ro = new ResizeObserver(() => resizeCanvas());
-    ro.observe(canvas);
-    return () => ro.disconnect();
-  }, [resizeCanvas]);
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    applyCanvasDefaults(ctx);
+    const { cssWidth, cssHeight } = canvasMetricsRef.current;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, cssWidth, cssHeight);
+
+    currentStrokeRef.current = [];
+    pendingPoints.current = [];
+  }, [applyCanvasDefaults]);
+
+  const getPos = useCallback((e: React.PointerEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return { x: 0, y: 0 };
+
+    const localX = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
+    const localY = Math.min(Math.max(e.clientY - rect.top, 0), rect.height);
+
+    return {
+      x: localX / rect.width,
+      y: localY / rect.height,
+    };
+  }, []);
+
+  const flushDraw = useCallback(() => {
+    if (pendingPoints.current.length <= 1) {
+      pendingPoints.current = pendingPoints.current.slice(-1);
+      rafId.current = 0;
+      return;
+    }
+
+    drawStroke(pendingPoints.current);
+    pendingPoints.current = pendingPoints.current.slice(-1);
+    rafId.current = 0;
+  }, [drawStroke]);
+
+  const requestFlush = useCallback(() => {
+    if (rafId.current) return;
+    rafId.current = requestAnimationFrame(flushDraw);
+  }, [flushDraw]);
 
   // Timer
   useEffect(() => {
@@ -115,122 +243,96 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   useEffect(() => {
     if (!lobbyId) return;
     const channel = supabase.channel(`scribble-draw-${lobbyId}`);
-    channel.on('broadcast', { event: 'draw' }, ({ payload }) => {
-      if (payload.drawer_id === guestId) return;
-      drawStroke(payload.points);
-    }).on('broadcast', { event: 'clear' }, () => {
-      clearCanvas();
-    }).subscribe();
+
+    channel
+      .on('broadcast', { event: 'draw' }, ({ payload }) => {
+        if (payload?.drawer_id === guestId) return;
+        const points = Array.isArray(payload?.points) ? payload.points as DrawPoint[] : [];
+        drawStroke(points);
+      })
+      .on('broadcast', { event: 'clear' }, () => {
+        clearCanvas();
+      })
+      .subscribe();
+
     broadcastChannel.current = channel;
     return () => { supabase.removeChannel(channel); };
-  }, [lobbyId, guestId]); // eslint-disable-line
-
-  const drawStroke = useCallback((points: DrawPoint[]) => {
-    const canvas = canvasRef.current;
-    if (!canvas || points.length < 2) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    for (let i = 1; i < points.length; i++) {
-      ctx.beginPath();
-      ctx.strokeStyle = points[i].color;
-      ctx.lineWidth = points[i].size;
-      ctx.moveTo(points[i - 1].x, points[i - 1].y);
-      ctx.lineTo(points[i].x, points[i].y);
-      ctx.stroke();
-    }
-  }, []);
-
-  const clearCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-  }, []);
-
-  const getPos = useCallback((e: React.PointerEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
-  }, []);
-
-  // RAF flush — draws all pending points in one frame
-  const flushDraw = useCallback(() => {
-    const canvas = canvasRef.current;
-    const points = pendingPoints.current;
-    if (!canvas || points.length < 2) {
-      rafId.current = 0;
-      return;
-    }
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    for (let i = 1; i < points.length; i++) {
-      ctx.beginPath();
-      ctx.strokeStyle = points[i].color;
-      ctx.lineWidth = points[i].size;
-      ctx.moveTo(points[i - 1].x, points[i - 1].y);
-      ctx.lineTo(points[i].x, points[i].y);
-      ctx.stroke();
-    }
-    // Keep last point as start of next segment
-    pendingPoints.current = [points[points.length - 1]];
-    rafId.current = 0;
-  }, []);
+  }, [lobbyId, guestId, drawStroke, clearCanvas]);
 
   const startDrawing = (e: React.PointerEvent) => {
     if (!isDrawer) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     e.preventDefault();
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-    setIsDrawing(true);
+    canvas.setPointerCapture?.(e.pointerId);
+
+    activePointerIdRef.current = e.pointerId;
+    isDrawingRef.current = true;
+
     const pos = getPos(e);
-    const point = { ...pos, color: isEraser ? "#ffffff" : color, size: brushSize };
-    pendingPoints.current = [point];
-    setCurrentAction([point]);
+    const point: DrawPoint = {
+      ...pos,
+      color: isEraser ? "#ffffff" : color,
+      size: brushSize,
+    };
+
+    currentStrokeRef.current = [point];
+    pendingPoints.current = [point, point];
+    requestFlush();
   };
 
   const draw = (e: React.PointerEvent) => {
-    if (!isDrawing || !isDrawer) return;
-    const pos = getPos(e);
-    const drawColor = isEraser ? "#ffffff" : color;
-    const point: DrawPoint = { ...pos, color: drawColor, size: brushSize };
-    pendingPoints.current.push(point);
-    setCurrentAction(prev => [...prev, point]);
+    if (!isDrawer || !isDrawingRef.current) return;
+    if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) return;
 
-    // Schedule RAF draw if not already pending
-    if (!rafId.current) {
-      rafId.current = requestAnimationFrame(flushDraw);
-    }
+    const pos = getPos(e);
+    const point: DrawPoint = {
+      ...pos,
+      color: isEraser ? "#ffffff" : color,
+      size: brushSize,
+    };
+
+    const last = currentStrokeRef.current[currentStrokeRef.current.length - 1];
+    if (last && Math.abs(last.x - point.x) < 0.0005 && Math.abs(last.y - point.y) < 0.0005) return;
+
+    currentStrokeRef.current.push(point);
+    pendingPoints.current.push(point);
+    requestFlush();
   };
 
-  const stopDrawing = () => {
-    if (!isDrawing) return;
-    setIsDrawing(false);
-    // Flush remaining points
-    if (pendingPoints.current.length > 1) {
-      flushDraw();
-    }
-    if (currentAction.length > 1) {
-      broadcastChannel.current?.send({
-        type: 'broadcast',
-        event: 'draw',
-        payload: { points: currentAction, drawer_id: guestId },
-      });
-    }
-    setCurrentAction([]);
-    pendingPoints.current = [];
+  const stopDrawing = (e?: React.PointerEvent) => {
+    if (!isDrawingRef.current) return;
+    if (e && activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) return;
+
     if (rafId.current) {
       cancelAnimationFrame(rafId.current);
       rafId.current = 0;
     }
+
+    if (pendingPoints.current.length > 1) {
+      drawStroke(pendingPoints.current);
+    }
+
+    const stroke = currentStrokeRef.current;
+    if (stroke.length > 0) {
+      broadcastChannel.current?.send({
+        type: 'broadcast',
+        event: 'draw',
+        payload: { points: stroke, drawer_id: guestId, coord_space: 'normalized' },
+      });
+    }
+
+    const canvas = canvasRef.current;
+    if (canvas && activePointerIdRef.current !== null) {
+      canvas.releasePointerCapture?.(activePointerIdRef.current);
+    }
+
+    isDrawingRef.current = false;
+    activePointerIdRef.current = null;
+    currentStrokeRef.current = [];
+    pendingPoints.current = [];
   };
 
   const handleClear = () => {
