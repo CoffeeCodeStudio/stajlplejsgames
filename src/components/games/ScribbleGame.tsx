@@ -194,20 +194,18 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
-    // Use offsetX/offsetY from the native event — these are already
-    // relative to the target element and work reliably on mobile
-    // regardless of scroll position, iframes, or CSS transforms.
-    const nativeE = e.nativeEvent as PointerEvent;
-    const ox = nativeE.offsetX;
-    const oy = nativeE.offsetY;
+    // Always use a fresh getBoundingClientRect — this is the most
+    // reliable method across mobile/desktop/iframe contexts.
+    // clientX/clientY are always viewport-relative, matching getBoundingClientRect.
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return { x: 0, y: 0 };
 
-    // offsetWidth/offsetHeight give the CSS layout size of the canvas
-    const w = canvas.offsetWidth || 1;
-    const h = canvas.offsetHeight || 1;
+    const localX = e.clientX - rect.left;
+    const localY = e.clientY - rect.top;
 
     return {
-      x: Math.min(Math.max(ox / w, 0), 1),
-      y: Math.min(Math.max(oy / h, 0), 1),
+      x: Math.min(Math.max(localX / rect.width, 0), 1),
+      y: Math.min(Math.max(localY / rect.height, 0), 1),
     };
   }, []);
 
@@ -277,11 +275,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const startDrawing = (e: React.PointerEvent) => {
     if (!isDrawer) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
     e.preventDefault();
-    canvas.setPointerCapture?.(e.pointerId);
+    // Don't use setPointerCapture — it breaks coordinate mapping on mobile browsers.
 
     activePointerIdRef.current = e.pointerId;
     isDrawingRef.current = true;
@@ -337,11 +332,6 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
         event: 'draw',
         payload: { points: stroke, drawer_id: guestId, coord_space: 'normalized' },
       });
-    }
-
-    const canvas = canvasRef.current;
-    if (canvas && activePointerIdRef.current !== null) {
-      canvas.releasePointerCapture?.(activePointerIdRef.current);
     }
 
     isDrawingRef.current = false;
@@ -613,7 +603,6 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                     onPointerMove={draw}
                     onPointerUp={stopDrawing}
                     onPointerCancel={stopDrawing}
-                    onLostPointerCapture={() => stopDrawing()}
                     onPointerLeave={stopDrawing}
                   />
                 </div>
