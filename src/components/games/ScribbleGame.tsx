@@ -224,13 +224,21 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   }, [flushDraw]);
 
   // Timer
+  const advancedForRoundRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (lobby?.status !== "playing") return;
+    const currentRound = lobby?.round_number ?? 0;
     setTimeLeft(ROUND_TIME);
+    advancedForRoundRef.current = null;
+
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          if (isDrawer) advanceTurn();
+          if (isDrawer && advancedForRoundRef.current !== currentRound) {
+            advancedForRoundRef.current = currentRound;
+            advanceTurn();
+          }
           return 0;
         }
         return prev - 1;
