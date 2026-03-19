@@ -403,6 +403,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const startWithWord = async (word: string) => {
     setShowWordPicker(false);
     setWordChoices([]);
+    wordPickerRoundRef.current = 1;
     await supabase.from('scribble_lobbies').update({
       status: 'playing', current_word: word, current_drawer_id: guestId, round_number: 1,
     }).eq('id', lobbyId);
