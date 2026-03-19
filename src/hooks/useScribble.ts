@@ -254,7 +254,41 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
 
   const leaveLobby = async () => {
     if (!lobbyId) return;
+
+    // Post a leave notification as a system guess
+    await supabase.from('scribble_guesses').insert({
+      lobby_id: lobbyId,
+      user_id: guestId,
+      username,
+      guess: `📤 ${username} lämnade spelet`,
+      is_correct: false,
+    });
+
+    // Remove the player
     await supabase.from('scribble_players').delete().eq('lobby_id', lobbyId).eq('user_id', guestId);
+
+    // Check remaining players
+    const { data: remaining } = await supabase
+      .from('scribble_players')
+      .select('user_id')
+      .eq('lobby_id', lobbyId);
+
+    const remainingPlayers = remaining || [];
+
+    if (remainingPlayers.length === 0) {
+      // Last player left — clean up lobby
+      await supabase.from('scribble_guesses').delete().eq('lobby_id', lobbyId);
+      await supabase.from('scribble_lobbies').update({ status: 'finished' }).eq('id', lobbyId);
+      await supabase.from('scribble_lobbies').delete().eq('id', lobbyId);
+    } else if (lobby?.current_drawer_id === guestId && lobby?.status === 'playing') {
+      // Drawer left — advance to next player
+      const nextDrawer = remainingPlayers[0];
+      await supabase.from('scribble_lobbies').update({
+        current_drawer_id: nextDrawer.user_id,
+        current_word: null,
+        round_number: (lobby.round_number || 0) + 1,
+      }).eq('id', lobbyId);
+    }
   };
 
   return { lobby, players, guesses, joinLobby, submitGuess, leaveLobby, visitorId: guestId };
