@@ -50,6 +50,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
   const [wordChoices, setWordChoices] = useState<string[]>([]);
   const [showWordPicker, setShowWordPicker] = useState(false);
+  const wordPickerRoundRef = useRef<number | null>(null);
   const guessEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMobile = useIsMobile();
