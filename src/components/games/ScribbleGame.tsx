@@ -91,6 +91,15 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
     canvasMetricsRef.current = { cssWidth: rect.width, cssHeight: rect.height, dpr };
 
+    if (import.meta.env.DEV) {
+      console.debug("[Scribble] resizeCanvas", {
+        rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+        attr: { width: canvas.width, height: canvas.height },
+        targetAttr: { width: nextWidth, height: nextHeight },
+        dpr,
+      });
+    }
+
     if (canvas.width === nextWidth && canvas.height === nextHeight) return;
 
     let snapshot: HTMLCanvasElement | null = null;
@@ -123,19 +132,39 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   }, [applyCanvasDefaults]);
 
   useEffect(() => {
-    resizeCanvas();
+    const canvas = canvasRef.current;
     const container = containerRef.current;
-    if (!container) return;
+    if (!canvas || !container) return;
+
+    const rafId = requestAnimationFrame(() => resizeCanvas());
+
+    if (import.meta.env.DEV) {
+      const canvasStyle = window.getComputedStyle(canvas);
+      const containerStyle = window.getComputedStyle(container);
+      console.debug("[Scribble] layoutCheck", {
+        canvasRect: canvas.getBoundingClientRect(),
+        containerRect: container.getBoundingClientRect(),
+        canvasPosition: canvasStyle.position,
+        containerPosition: containerStyle.position,
+        canvasTransform: canvasStyle.transform,
+        containerTransform: containerStyle.transform,
+      });
+    }
 
     const ro = new ResizeObserver(() => resizeCanvas());
     ro.observe(container);
+    ro.observe(canvas);
+
     window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("orientationchange", resizeCanvas);
 
     return () => {
+      cancelAnimationFrame(rafId);
       ro.disconnect();
       window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("orientationchange", resizeCanvas);
     };
-  }, [resizeCanvas]);
+  }, [resizeCanvas, lobby?.status, mobileTab, isMobile]);
 
   const drawStroke = useCallback((points: DrawPoint[]) => {
     const canvas = canvasRef.current;
@@ -275,6 +304,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const startDrawing = (e: React.PointerEvent) => {
     if (!isDrawer) return;
 
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     e.preventDefault();
     // Don't use setPointerCapture — it breaks coordinate mapping on mobile browsers.
 
@@ -282,6 +314,17 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     isDrawingRef.current = true;
 
     const pos = getPos(e);
+
+    if (import.meta.env.DEV) {
+      const rect = canvas.getBoundingClientRect();
+      console.debug("[Scribble] pointerMap", {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+        normalized: pos,
+      });
+    }
+
     const point: DrawPoint = {
       ...pos,
       color: isEraser ? "#ffffff" : color,
