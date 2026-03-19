@@ -304,6 +304,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const startDrawing = (e: React.PointerEvent) => {
     if (!isDrawer) return;
 
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     e.preventDefault();
     // Don't use setPointerCapture — it breaks coordinate mapping on mobile browsers.
 
@@ -311,6 +314,17 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     isDrawingRef.current = true;
 
     const pos = getPos(e);
+
+    if (import.meta.env.DEV) {
+      const rect = canvas.getBoundingClientRect();
+      console.debug("[Scribble] pointerMap", {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+        normalized: pos,
+      });
+    }
+
     const point: DrawPoint = {
       ...pos,
       color: isEraser ? "#ffffff" : color,
