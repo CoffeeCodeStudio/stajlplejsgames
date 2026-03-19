@@ -50,6 +50,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
   const [wordChoices, setWordChoices] = useState<string[]>([]);
   const [showWordPicker, setShowWordPicker] = useState(false);
+  const wordPickerRoundRef = useRef<number | null>(null);
   const guessEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMobile = useIsMobile();
@@ -368,9 +369,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     const currentIdx = players.findIndex(p => p.user_id === lobby.current_drawer_id);
     const nextIdx = (currentIdx + 1) % players.length;
     const nextDrawer = players[nextIdx];
-    if (nextDrawer.user_id === guestId) {
-      const choices = getRandomWords(3);
-      setWordChoices(choices);
+    if (nextDrawer.user_id === guestId && wordPickerRoundRef.current !== nextRound) {
+      wordPickerRoundRef.current = nextRound;
+      setWordChoices(getRandomWords(3));
       setShowWordPicker(true);
     }
     await supabase.from('scribble_lobbies').update({
@@ -402,6 +403,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const startWithWord = async (word: string) => {
     setShowWordPicker(false);
     setWordChoices([]);
+    wordPickerRoundRef.current = 1;
     await supabase.from('scribble_lobbies').update({
       status: 'playing', current_word: word, current_drawer_id: guestId, round_number: 1,
     }).eq('id', lobbyId);
@@ -571,7 +573,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                     <p className="text-sm text-muted-foreground">Väntar på att spelet ska starta...</p>
                     {isCreator && (
                       <Button onClick={() => {
-                        setWordChoices(getRandomWords(3));
+                        if (wordPickerRoundRef.current !== 0) {
+                          wordPickerRoundRef.current = 0;
+                          setWordChoices(getRandomWords(3));
+                        }
                         setShowWordPicker(true);
                       }}>
                         Starta runda!
