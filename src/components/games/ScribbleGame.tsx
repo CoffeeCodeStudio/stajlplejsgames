@@ -711,14 +711,18 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                   <span className="text-[10px] font-pixel text-primary">Poäng</span>
                 </div>
                 <div className="p-1.5 space-y-0.5 max-h-24 overflow-y-auto">
-                  {players.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between text-xs">
-                      <span className={`truncate ${p.user_id === lobby?.current_drawer_id ? "text-primary font-bold" : "text-foreground"}`}>
-                        {p.user_id === lobby?.current_drawer_id ? "🖌️ " : ""}{p.username}
-                      </span>
-                      <span className="font-mono text-muted-foreground">{p.score}p</span>
-                    </div>
-                  ))}
+                  {players.map((p) => {
+                    const secsSinceLastSeen = (Date.now() - new Date(p.last_seen).getTime()) / 1000;
+                    const isDisconnected = secsSinceLastSeen > 60;
+                    return (
+                      <div key={p.id} className="flex items-center justify-between text-xs">
+                        <span className={`truncate ${isDisconnected ? "text-muted-foreground/50 line-through" : p.user_id === lobby?.current_drawer_id ? "text-primary font-bold" : "text-foreground"}`}>
+                          {p.user_id === lobby?.current_drawer_id ? "🖌️ " : ""}{isDisconnected ? "⚡ " : ""}{p.username}
+                        </span>
+                        <span className="font-mono text-muted-foreground">{p.score}p</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
