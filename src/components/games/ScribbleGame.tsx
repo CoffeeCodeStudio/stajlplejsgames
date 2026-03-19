@@ -275,11 +275,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const startDrawing = (e: React.PointerEvent) => {
     if (!isDrawer) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
     e.preventDefault();
-    canvas.setPointerCapture?.(e.pointerId);
+    // Don't use setPointerCapture — it breaks coordinate mapping on mobile browsers.
 
     activePointerIdRef.current = e.pointerId;
     isDrawingRef.current = true;
