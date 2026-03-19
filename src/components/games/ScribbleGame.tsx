@@ -369,9 +369,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     const currentIdx = players.findIndex(p => p.user_id === lobby.current_drawer_id);
     const nextIdx = (currentIdx + 1) % players.length;
     const nextDrawer = players[nextIdx];
-    if (nextDrawer.user_id === guestId) {
-      const choices = getRandomWords(3);
-      setWordChoices(choices);
+    if (nextDrawer.user_id === guestId && wordPickerRoundRef.current !== nextRound) {
+      wordPickerRoundRef.current = nextRound;
+      setWordChoices(getRandomWords(3));
       setShowWordPicker(true);
     }
     await supabase.from('scribble_lobbies').update({
