@@ -194,15 +194,20 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return { x: 0, y: 0 };
+    // Use offsetX/offsetY from the native event — these are already
+    // relative to the target element and work reliably on mobile
+    // regardless of scroll position, iframes, or CSS transforms.
+    const nativeE = e.nativeEvent as PointerEvent;
+    const ox = nativeE.offsetX;
+    const oy = nativeE.offsetY;
 
-    const localX = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
-    const localY = Math.min(Math.max(e.clientY - rect.top, 0), rect.height);
+    // offsetWidth/offsetHeight give the CSS layout size of the canvas
+    const w = canvas.offsetWidth || 1;
+    const h = canvas.offsetHeight || 1;
 
     return {
-      x: localX / rect.width,
-      y: localY / rect.height,
+      x: Math.min(Math.max(ox / w, 0), 1),
+      y: Math.min(Math.max(oy / h, 0), 1),
     };
   }, []);
 
