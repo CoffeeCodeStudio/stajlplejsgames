@@ -24,6 +24,7 @@ export interface ScribblePlayer {
   avatar_url: string | null;
   score: number;
   joined_at: string;
+  last_seen: string;
 }
 
 export interface ScribbleGuess {
