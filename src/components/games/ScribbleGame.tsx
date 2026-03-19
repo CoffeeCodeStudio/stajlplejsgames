@@ -69,6 +69,37 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
   useEffect(() => { joinLobby(); }, [lobbyId]); // eslint-disable-line
 
+  // When the lobby drawer changes (e.g. drawer left), show word picker for new drawer
+  const prevDrawerRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!lobby || lobby.status !== 'playing') return;
+    const currentDrawer = lobby.current_drawer_id;
+    
+    // Detect drawer change (someone left, turn advanced server-side)
+    if (prevDrawerRef.current !== null && currentDrawer !== prevDrawerRef.current) {
+      // New drawer is me and no word is set yet — show word picker
+      if (currentDrawer === guestId && !lobby.current_word) {
+        const round = lobby.round_number || 0;
+        if (wordPickerRoundRef.current !== round) {
+          wordPickerRoundRef.current = round;
+          setWordChoices(getRandomWords(3));
+          setShowWordPicker(true);
+        }
+        clearCanvas();
+      }
+    }
+    prevDrawerRef.current = currentDrawer ?? null;
+  }, [lobby?.current_drawer_id, lobby?.status, lobby?.current_word, lobby?.round_number, guestId]); // eslint-disable-line
+
+  // If lobby is finished (all left), auto-leave
+  useEffect(() => {
+    if (lobby?.status === 'finished') {
+      // Small delay to let the UI show the finished state
+      const t = setTimeout(() => onLeave(), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [lobby?.status]); // eslint-disable-line
+
   useEffect(() => {
     guessEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [guesses]);
