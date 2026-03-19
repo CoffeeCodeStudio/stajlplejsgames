@@ -334,11 +334,6 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       });
     }
 
-    const canvas = canvasRef.current;
-    if (canvas && activePointerIdRef.current !== null) {
-      canvas.releasePointerCapture?.(activePointerIdRef.current);
-    }
-
     isDrawingRef.current = false;
     activePointerIdRef.current = null;
     currentStrokeRef.current = [];
