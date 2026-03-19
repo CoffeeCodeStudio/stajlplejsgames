@@ -201,17 +201,96 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
     return () => { supabase.removeChannel(channel); };
   }, [fetchGame, lobbyId]);
 
-  // Heartbeat
+  // Per-player heartbeat: update last_seen every 30s, also update lobby updated_at
+  useEffect(() => {
+    if (!lobbyId || !guestId) return;
+
+    // Send heartbeat immediately on mount
+    const sendHeartbeat = async () => {
+      const now = new Date().toISOString();
+      await Promise.all([
+        supabase
+          .from('scribble_players')
+          .update({ last_seen: now })
+          .eq('lobby_id', lobbyId)
+          .eq('user_id', guestId),
+        supabase
+          .from('scribble_lobbies')
+          .update({ updated_at: now })
+          .eq('id', lobbyId),
+      ]);
+    };
+
+    sendHeartbeat();
+    const heartbeatInterval = setInterval(sendHeartbeat, 30_000);
+
+    return () => clearInterval(heartbeatInterval);
+  }, [lobbyId, guestId]);
+
+  // Stale player cleanup: check every 15s, remove players inactive >90s, advance turn if drawer removed
   useEffect(() => {
     if (!lobbyId) return;
-    const interval = setInterval(async () => {
-      await supabase
-        .from('scribble_lobbies')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', lobbyId);
-    }, 60_000);
-    return () => clearInterval(interval);
-  }, [lobbyId]);
+
+    const cleanupStale = async () => {
+      const ninetySecAgo = new Date(Date.now() - 90_000).toISOString();
+
+      const { data: stalePlayers } = await supabase
+        .from('scribble_players')
+        .select('user_id, username')
+        .eq('lobby_id', lobbyId)
+        .lt('last_seen', ninetySecAgo);
+
+      if (!stalePlayers || stalePlayers.length === 0) return;
+
+      for (const stale of stalePlayers) {
+        // Post leave notification
+        await supabase.from('scribble_guesses').insert({
+          lobby_id: lobbyId,
+          user_id: stale.user_id,
+          username: stale.username,
+          guess: `⚡ ${stale.username} kopplades bort`,
+          is_correct: false,
+        });
+
+        // Remove the player
+        await supabase
+          .from('scribble_players')
+          .delete()
+          .eq('lobby_id', lobbyId)
+          .eq('user_id', stale.user_id);
+      }
+
+      // Check remaining players
+      const { data: remaining } = await supabase
+        .from('scribble_players')
+        .select('user_id')
+        .eq('lobby_id', lobbyId);
+
+      const remainingPlayers = remaining || [];
+
+      if (remainingPlayers.length === 0) {
+        // All gone — finish and delete lobby
+        await supabase.from('scribble_guesses').delete().eq('lobby_id', lobbyId);
+        await supabase.from('scribble_lobbies').update({ status: 'finished' }).eq('id', lobbyId);
+        await supabase.from('scribble_lobbies').delete().eq('id', lobbyId);
+      } else {
+        // If any stale player was the current drawer, advance turn
+        const currentLobby = lobby;
+        const staleIds = stalePlayers.map(s => s.user_id);
+        if (currentLobby?.current_drawer_id && staleIds.includes(currentLobby.current_drawer_id)) {
+          const nextDrawer = remainingPlayers[0];
+          await supabase.from('scribble_lobbies').update({
+            current_drawer_id: nextDrawer.user_id,
+            current_word: null,
+            round_number: (currentLobby.round_number || 0) + 1,
+          }).eq('id', lobbyId);
+        }
+      }
+    };
+
+    const cleanupInterval = setInterval(cleanupStale, 15_000);
+    return () => clearInterval(cleanupInterval);
+  }, [lobbyId, lobby?.current_drawer_id, lobby?.round_number]); // eslint-disable-line
 
   const joinLobby = async () => {
     if (!lobbyId) return;
