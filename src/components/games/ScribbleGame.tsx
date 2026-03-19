@@ -573,7 +573,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                     <p className="text-sm text-muted-foreground">Väntar på att spelet ska starta...</p>
                     {isCreator && (
                       <Button onClick={() => {
-                        setWordChoices(getRandomWords(3));
+                        if (wordPickerRoundRef.current !== 0) {
+                          wordPickerRoundRef.current = 0;
+                          setWordChoices(getRandomWords(3));
+                        }
                         setShowWordPicker(true);
                       }}>
                         Starta runda!
