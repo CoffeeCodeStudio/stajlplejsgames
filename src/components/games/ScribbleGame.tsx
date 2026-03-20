@@ -731,6 +731,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                         </div>
                       );
                     }
+                    const time = new Date(g.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
                     return (
                       <div
                         key={g.id}
@@ -740,10 +741,13 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                             : "bg-muted/60"
                         }`}
                       >
-                        <span className={`font-bold text-[11px] ${g.is_correct ? "text-green-600 dark:text-green-400" : "text-foreground/70"}`}>
-                          {g.username}
-                        </span>
-                        <span className="text-foreground ml-1">
+                        <div className="flex items-baseline justify-between gap-1">
+                          <span className={`font-bold text-[11px] ${g.is_correct ? "text-green-600 dark:text-green-400" : "text-foreground/70"}`}>
+                            {g.username}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground/60 tabular-nums shrink-0">{time}</span>
+                        </div>
+                        <span className="text-foreground">
                           {g.is_correct
                             ? (isDrawer ? "✅ Rätt!" : "✅ Rätt svar!")
                             : (isDrawer ? "••••••" : g.guess)
