@@ -3,7 +3,7 @@ import { useScribbleGame } from "@/hooks/useScribble";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward, MessageSquare } from "lucide-react";
+import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
