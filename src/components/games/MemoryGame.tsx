@@ -169,6 +169,8 @@ export function MemoryGame({ onBack, username }: Props) {
     }
   }, []);
 
+  const INVALID_USERNAMES = new Set(["firefox", "chrome", "safari", "edge", "opera", "brave", "vivaldi", "chromium"]);
+
   const fetchLeaderboard = useCallback(async (diff: Difficulty) => {
     const { data } = await supabase
       .from('memory_highscores')
@@ -176,9 +178,9 @@ export function MemoryGame({ onBack, username }: Props) {
       .eq('difficulty', diff)
       .order('score', { ascending: false })
       .limit(100);
-    // Keep only each player's best score, top 10
     const seen = new Set<string>();
     const unique = ((data as HighscoreEntry[]) || []).filter(e => {
+      if (INVALID_USERNAMES.has(e.username.toLowerCase())) return false;
       if (seen.has(e.username)) return false;
       seen.add(e.username);
       return true;
