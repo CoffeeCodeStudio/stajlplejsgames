@@ -642,13 +642,23 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                 </div>
               )}
 
-              {/* Waiting state */}
+              {/* Waiting state — player list + host start */}
               {lobby?.status === "waiting" && (
                 <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center space-y-4 max-w-sm mx-auto px-4">
-                    <Paintbrush className="w-10 h-10 mx-auto text-muted-foreground/50" />
-                    <p className="text-sm text-muted-foreground">Väntar på att spelet ska starta...</p>
-                    {isCreator && (
+                  <div className="text-center space-y-4 max-w-sm mx-auto px-4 w-full">
+                    <Users className="w-10 h-10 mx-auto text-muted-foreground/50" />
+                    <h3 className="font-pixel text-[10px] text-foreground">Spelare i lobbyn</h3>
+                    <div className="space-y-1.5">
+                      {players.map((p, i) => (
+                        <div key={p.id} className="flex items-center justify-between bg-muted/50 rounded px-3 py-1.5 text-sm">
+                          <span className="truncate">
+                            {i === 0 ? "👑 " : ""}{p.username}
+                          </span>
+                          {i === 0 && <span className="text-[10px] text-muted-foreground font-pixel">HOST</span>}
+                        </div>
+                      ))}
+                    </div>
+                    {players.length > 0 && players[0].user_id === guestId ? (
                       <Button onClick={() => {
                         if (wordPickerRoundRef.current !== 0) {
                           wordPickerRoundRef.current = 0;
@@ -656,8 +666,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                         }
                         setShowWordPicker(true);
                       }}>
-                        Starta runda!
+                        Starta spelet
                       </Button>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">Väntar på host...</p>
                     )}
                   </div>
                 </div>
