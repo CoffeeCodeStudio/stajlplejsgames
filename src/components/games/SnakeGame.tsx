@@ -354,18 +354,21 @@ export function SnakeGame({ onBack, username }: Props) {
             <div className="max-h-96 overflow-y-auto">
               {leaderboard.length === 0 ? (
                 <p className="text-center text-muted-foreground text-xs py-8 font-pixel">Ingen har spelat ännu — bli först!</p>
-              ) : leaderboard.map((entry, i) => (
+              ) : leaderboard.map((entry, i) => {
+                const date = new Date(entry.created_at).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' });
+                return (
                 <div key={entry.id} className="retro-table-row">
                   <span className="w-8 text-center font-bold text-xs">
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
                   </span>
                   <div className="flex-1 min-w-0">
                     <span className="font-bold text-xs truncate block">{entry.username}</span>
-                    <span className="text-[10px] text-muted-foreground">{entry.apples_eaten} äpplen · {formatTime(entry.time_seconds)}</span>
+                    <span className="text-[10px] text-muted-foreground">{entry.apples_eaten} äpplen · {formatTime(entry.time_seconds)} · {date}</span>
                   </div>
                   <span className="font-bold text-primary text-xs">{entry.score}p</span>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
