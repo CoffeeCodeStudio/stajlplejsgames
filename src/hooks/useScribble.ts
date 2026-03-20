@@ -177,7 +177,7 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
 
     const [lobbyRes, playersRes, guessesRes] = await Promise.all([
       supabase.from('scribble_lobbies').select('*').eq('id', lobbyId).single(),
-      supabase.from('scribble_players').select('*').eq('lobby_id', lobbyId).order('score', { ascending: false }),
+      supabase.from('scribble_players').select('*').eq('lobby_id', lobbyId).order('joined_at', { ascending: true }),
       supabase.from('scribble_guesses').select('*').eq('lobby_id', lobbyId).order('created_at', { ascending: true }).limit(100),
     ]);
 
