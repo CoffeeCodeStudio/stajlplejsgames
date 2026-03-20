@@ -751,16 +751,37 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
               {/* Guesses */}
               <ScrollArea className="flex-1 min-h-0">
-                <div className="p-2 space-y-1.5">
-                  {guesses.map((g) => (
-                    <div key={g.id} className={`text-xs ${g.is_correct ? "text-primary font-bold" : "text-foreground"}`}>
-                      <span className="font-bold">{g.username}:</span>{" "}
-                      {g.is_correct
-                        ? (isDrawer ? "✅ Rätt!" : "✅ Rätt svar!")
-                        : (isDrawer ? "••••••" : g.guess)
-                      }
-                    </div>
-                  ))}
+                <div className="p-2 space-y-1">
+                  {guesses.map((g) => {
+                    const isSystem = g.guess.startsWith('📤') || g.guess.startsWith('⚡') || g.guess.startsWith('👋');
+                    if (isSystem) {
+                      return (
+                        <div key={g.id} className="text-[10px] text-muted-foreground text-center italic py-0.5">
+                          {g.guess}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div
+                        key={g.id}
+                        className={`rounded px-2 py-1 text-xs max-w-[90%] ${
+                          g.is_correct
+                            ? "bg-green-500/20 border border-green-500/40"
+                            : "bg-muted/60"
+                        }`}
+                      >
+                        <span className={`font-bold text-[11px] ${g.is_correct ? "text-green-600 dark:text-green-400" : "text-foreground/70"}`}>
+                          {g.username}
+                        </span>
+                        <span className="text-foreground ml-1">
+                          {g.is_correct
+                            ? (isDrawer ? "✅ Rätt!" : "✅ Rätt svar!")
+                            : (isDrawer ? "••••••" : g.guess)
+                          }
+                        </span>
+                      </div>
+                    );
+                  })}
                   <div ref={guessEndRef} />
                 </div>
               </ScrollArea>
