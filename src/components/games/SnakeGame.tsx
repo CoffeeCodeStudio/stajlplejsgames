@@ -65,15 +65,17 @@ export function SnakeGame({ onBack, username }: Props) {
   const [leaderboard, setLeaderboard] = useState<HighscoreEntry[]>([]);
   const [scoreSaved, setScoreSaved] = useState(false);
 
+  const INVALID_USERNAMES = new Set(["firefox", "chrome", "safari", "edge", "opera", "brave", "vivaldi", "chromium"]);
+
   const fetchLeaderboard = useCallback(async () => {
     const { data } = await supabase
       .from('snake_highscores')
       .select('*')
       .order('score', { ascending: false })
       .limit(100);
-    // Keep only each player's best score, top 10
     const seen = new Set<string>();
     const unique = ((data as HighscoreEntry[]) || []).filter(e => {
+      if (INVALID_USERNAMES.has(e.username.toLowerCase())) return false;
       if (seen.has(e.username)) return false;
       seen.add(e.username);
       return true;
