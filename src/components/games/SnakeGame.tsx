@@ -70,8 +70,15 @@ export function SnakeGame({ onBack, username }: Props) {
       .from('snake_highscores')
       .select('*')
       .order('score', { ascending: false })
-      .limit(20);
-    setLeaderboard((data as HighscoreEntry[]) || []);
+      .limit(100);
+    // Keep only each player's best score, top 10
+    const seen = new Set<string>();
+    const unique = ((data as HighscoreEntry[]) || []).filter(e => {
+      if (seen.has(e.username)) return false;
+      seen.add(e.username);
+      return true;
+    }).slice(0, 10);
+    setLeaderboard(unique);
   }, []);
 
   const saveScore = useCallback(async (finalScore: number, apples: number, timeSec: number) => {
