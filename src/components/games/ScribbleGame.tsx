@@ -690,26 +690,11 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                 </div>
               )}
 
-              {/* Mobile inline guess input below canvas */}
-              {isMobile && lobby?.status === "playing" && mobileTab === "canvas" && !isDrawer && (
-                <div className="p-1.5 border-t border-border flex gap-1.5 bg-card shrink-0">
-                  <Input
-                    value={guessText}
-                    onChange={(e) => setGuessText(e.target.value)}
-                    placeholder="Skriv din gissning..."
-                    className="text-sm h-8"
-                    onKeyDown={(e) => e.key === "Enter" && handleGuess()}
-                  />
-                  <Button size="icon" onClick={handleGuess} className="h-8 w-8 shrink-0">
-                    <Send className="w-3 h-3" />
-                  </Button>
-                </div>
-              )}
             </div>
 
-            {/* Sidebar — narrow overlay-style on desktop, tab on mobile */}
+            {/* Sidebar — always visible */}
             <div className={`${isMobile
-              ? (mobileTab === "chat" || lobby?.status !== "playing" ? "flex flex-col flex-1 min-h-0" : "hidden")
+              ? "flex flex-col flex-1 min-h-0"
               : "w-48 border-l border-border flex flex-col shrink-0"
             } bg-card`}>
               {/* Scoreboard */}
