@@ -749,8 +749,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                         </div>
                         <span className="text-foreground">
                           {g.is_correct
-                            ? (isDrawer ? "✅ Rätt!" : "✅ Rätt svar!")
-                            : (isDrawer ? "••••••" : g.guess)
+                            ? "✅ Rätt svar!"
+                            : g.guess
                           }
                         </span>
                       </div>
