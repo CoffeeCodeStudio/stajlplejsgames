@@ -659,15 +659,23 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                       ))}
                     </div>
                     {players.length > 0 && players[0].user_id === guestId ? (
-                      <Button onClick={() => {
-                        if (wordPickerRoundRef.current !== 0) {
-                          wordPickerRoundRef.current = 0;
-                          setWordChoices(getRandomWords(3));
-                        }
-                        setShowWordPicker(true);
-                      }}>
-                        Starta spelet
-                      </Button>
+                      <>
+                        <Button
+                          disabled={players.length < 2}
+                          onClick={() => {
+                            if (wordPickerRoundRef.current !== 0) {
+                              wordPickerRoundRef.current = 0;
+                              setWordChoices(getRandomWords(3));
+                            }
+                            setShowWordPicker(true);
+                          }}
+                        >
+                          Starta spelet
+                        </Button>
+                        {players.length < 2 && (
+                          <p className="text-xs text-muted-foreground">Minst 2 spelare krävs för att starta</p>
+                        )}
+                      </>
                     ) : (
                       <p className="text-sm text-muted-foreground italic">Väntar på host...</p>
                     )}
