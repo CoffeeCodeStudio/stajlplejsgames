@@ -692,6 +692,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                     style={{
                       cursor: isDrawer ? "crosshair" : "default",
                       touchAction: "none",
+                      pointerEvents: isDrawer ? "auto" : "none",
                     }}
                     onPointerDown={startDrawing}
                     onPointerMove={draw}
