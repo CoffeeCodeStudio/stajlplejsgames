@@ -3,7 +3,7 @@ import { useScribbleGame } from "@/hooks/useScribble";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward, MessageSquare } from "lucide-react";
+import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -54,7 +54,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const guessEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMobile = useIsMobile();
-  const [mobileTab, setMobileTab] = useState<"canvas" | "chat">("canvas");
+  const lastSeenCorrectRef = useRef<string | null>(null);
 
   const isDrawingRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
@@ -102,6 +102,14 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
   useEffect(() => {
     guessEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Notify drawer when someone guesses correctly
+    if (isDrawer && guesses.length > 0) {
+      const latest = guesses[guesses.length - 1];
+      if (latest.is_correct && lastSeenCorrectRef.current !== latest.id) {
+        lastSeenCorrectRef.current = latest.id;
+        toast({ title: `✅ ${latest.username} gissade rätt!` });
+      }
+    }
   }, [guesses]);
 
   const applyCanvasDefaults = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -195,7 +203,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       window.removeEventListener("resize", resizeCanvas);
       window.removeEventListener("orientationchange", resizeCanvas);
     };
-  }, [resizeCanvas, lobby?.status, mobileTab, isMobile]);
+  }, [resizeCanvas, lobby?.status, isMobile]);
 
   const drawStroke = useCallback((points: DrawPoint[]) => {
     const canvas = canvasRef.current;
@@ -565,33 +573,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       {/* Active game layout */}
       {lobby?.status !== "finished" && (
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-          {/* Mobile tab toggle */}
-          {isMobile && lobby?.status === "playing" && (
-            <div className="flex border-b border-border bg-card shrink-0">
-              <button
-                onClick={() => setMobileTab("canvas")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold transition-colors ${mobileTab === "canvas" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
-              >
-                <Paintbrush className="w-3 h-3" /> Rita
-              </button>
-              <button
-                onClick={() => setMobileTab("chat")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold transition-colors ${mobileTab === "chat" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
-              >
-                <MessageSquare className="w-3 h-3" /> Gissningar
-                {guesses.length > 0 && (
-                  <span className="bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">
-                    {guesses.length}
-                  </span>
-                )}
-              </button>
-            </div>
-          )}
-
           {/* Main content: canvas + sidebar */}
           <div className={`flex-1 flex overflow-hidden min-h-0 ${isMobile ? "flex-col" : ""}`}>
-            {/* Canvas section — takes maximum space */}
-            <div className={`flex flex-col min-w-0 min-h-0 ${isMobile ? "flex-1" : "flex-1"} ${isMobile && mobileTab !== "canvas" && lobby?.status === "playing" ? "hidden" : ""}`}>
+            {/* Canvas section */}
+            <div className={`flex flex-col min-w-0 min-h-0 ${isMobile ? "" : "flex-1"}`} style={isMobile && lobby?.status === "playing" ? { flex: "0 0 55%" } : isMobile ? { flex: "1" } : undefined}>
               {/* Toolbar */}
               {isDrawer && (
                 <div className="flex items-center gap-1 p-1.5 border-b border-border bg-card overflow-x-auto scrollbar-none shrink-0">
@@ -705,26 +690,11 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                 </div>
               )}
 
-              {/* Mobile inline guess input below canvas */}
-              {isMobile && lobby?.status === "playing" && mobileTab === "canvas" && !isDrawer && (
-                <div className="p-1.5 border-t border-border flex gap-1.5 bg-card shrink-0">
-                  <Input
-                    value={guessText}
-                    onChange={(e) => setGuessText(e.target.value)}
-                    placeholder="Skriv din gissning..."
-                    className="text-sm h-8"
-                    onKeyDown={(e) => e.key === "Enter" && handleGuess()}
-                  />
-                  <Button size="icon" onClick={handleGuess} className="h-8 w-8 shrink-0">
-                    <Send className="w-3 h-3" />
-                  </Button>
-                </div>
-              )}
             </div>
 
-            {/* Sidebar — narrow overlay-style on desktop, tab on mobile */}
+            {/* Sidebar — always visible */}
             <div className={`${isMobile
-              ? (mobileTab === "chat" || lobby?.status !== "playing" ? "flex flex-col flex-1 min-h-0" : "hidden")
+              ? "flex flex-col flex-1 min-h-0"
               : "w-48 border-l border-border flex flex-col shrink-0"
             } bg-card`}>
               {/* Scoreboard */}
