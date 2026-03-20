@@ -573,33 +573,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       {/* Active game layout */}
       {lobby?.status !== "finished" && (
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-          {/* Mobile tab toggle */}
-          {isMobile && lobby?.status === "playing" && (
-            <div className="flex border-b border-border bg-card shrink-0">
-              <button
-                onClick={() => setMobileTab("canvas")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold transition-colors ${mobileTab === "canvas" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
-              >
-                <Paintbrush className="w-3 h-3" /> Rita
-              </button>
-              <button
-                onClick={() => setMobileTab("chat")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold transition-colors ${mobileTab === "chat" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
-              >
-                <MessageSquare className="w-3 h-3" /> Gissningar
-                {guesses.length > 0 && (
-                  <span className="bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">
-                    {guesses.length}
-                  </span>
-                )}
-              </button>
-            </div>
-          )}
-
           {/* Main content: canvas + sidebar */}
           <div className={`flex-1 flex overflow-hidden min-h-0 ${isMobile ? "flex-col" : ""}`}>
-            {/* Canvas section — takes maximum space */}
-            <div className={`flex flex-col min-w-0 min-h-0 ${isMobile ? "flex-1" : "flex-1"} ${isMobile && mobileTab !== "canvas" && lobby?.status === "playing" ? "hidden" : ""}`}>
+            {/* Canvas section */}
+            <div className={`flex flex-col min-w-0 min-h-0 ${isMobile ? "" : "flex-1"}`} style={isMobile && lobby?.status === "playing" ? { flex: "0 0 55%" } : isMobile ? { flex: "1" } : undefined}>
               {/* Toolbar */}
               {isDrawer && (
                 <div className="flex items-center gap-1 p-1.5 border-b border-border bg-card overflow-x-auto scrollbar-none shrink-0">
