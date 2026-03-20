@@ -154,16 +154,53 @@ export function ScribbleLobbyList({ onJoinLobby, guestId, guestUsername }: Scrib
                 />
               </div>
             </div>
-            <DialogFooter>
-              <button className="retro-btn" onClick={() => setShowCreate(false)}>Avbryt</button>
+            <div className="flex flex-col gap-2 mt-2">
               <button
                 onClick={handleCreate}
                 disabled={!title.trim() || creating}
-                className="retro-btn retro-btn-primary font-pixel text-[8px] disabled:opacity-50"
+                className="block w-full h-[40px] font-bold text-[#000000] text-center border-[3px] border-[#000000] rounded-none disabled:opacity-50"
+                style={{
+                  background: 'linear-gradient(180deg, hsl(16 85% 55%) 0%, hsl(16 80% 42%) 100%)',
+                  boxShadow: '3px 3px 0px #000000',
+                }}
+                onMouseDown={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'translate(3px, 3px)';
+                }}
+                onMouseUp={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '3px 3px 0px #000000';
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '3px 3px 0px #000000';
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+                }}
               >
                 {creating ? "Skapar..." : "Skapa"}
               </button>
-            </DialogFooter>
+              <button
+                className="block w-full h-[40px] font-bold text-[#000000] text-center border-[3px] border-[#000000] rounded-none"
+                style={{
+                  backgroundColor: '#CCCCCC',
+                  boxShadow: '3px 3px 0px #000000',
+                }}
+                onClick={() => setShowCreate(false)}
+                onMouseDown={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'translate(3px, 3px)';
+                }}
+                onMouseUp={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '3px 3px 0px #000000';
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '3px 3px 0px #000000';
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+                }}
+              >
+                Avbryt
+              </button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
