@@ -102,6 +102,14 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
   useEffect(() => {
     guessEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Notify drawer when someone guesses correctly
+    if (isDrawer && guesses.length > 0) {
+      const latest = guesses[guesses.length - 1];
+      if (latest.is_correct && lastSeenCorrectRef.current !== latest.id) {
+        lastSeenCorrectRef.current = latest.id;
+        toast({ title: `✅ ${latest.username} gissade rätt!` });
+      }
+    }
   }, [guesses]);
 
   const applyCanvasDefaults = useCallback((ctx: CanvasRenderingContext2D) => {
