@@ -490,23 +490,35 @@ export function SnakeGame({ onBack, username }: Props) {
           </div>
         </div>
 
-        {/* Touch controls */}
-        <div className="flex justify-center md:hidden">
-          <div className="grid grid-cols-3 gap-5 w-64 sm:w-80">
+        {/* Touch controls - mobile only */}
+        <div className="flex justify-center md:hidden mt-4">
+          <div className="grid grid-cols-3 gap-3" style={{ width: 240 }}>
             <div />
-            <button className="retro-btn aspect-square flex items-center justify-center text-lg h-16 sm:h-20"
+            <button
+              className="flex items-center justify-center text-2xl font-bold select-none"
+              style={{ minWidth: 70, minHeight: 70, background: '#CCCCCC', color: '#000000', border: '3px solid #000000', borderRadius: 0, boxShadow: '4px 4px 0px #000000' }}
               onTouchStart={(e) => { e.preventDefault(); handleDirection("UP"); }}
-              onClick={() => handleDirection("UP")}>▲</button>
+              onClick={() => handleDirection("UP")}
+            >▲</button>
             <div />
-            <button className="retro-btn aspect-square flex items-center justify-center text-lg h-16 sm:h-20"
+            <button
+              className="flex items-center justify-center text-2xl font-bold select-none"
+              style={{ minWidth: 70, minHeight: 70, background: '#CCCCCC', color: '#000000', border: '3px solid #000000', borderRadius: 0, boxShadow: '4px 4px 0px #000000' }}
               onTouchStart={(e) => { e.preventDefault(); handleDirection("LEFT"); }}
-              onClick={() => handleDirection("LEFT")}>◄</button>
-            <button className="retro-btn aspect-square flex items-center justify-center text-lg h-16 sm:h-20"
+              onClick={() => handleDirection("LEFT")}
+            >◄</button>
+            <button
+              className="flex items-center justify-center text-2xl font-bold select-none"
+              style={{ minWidth: 70, minHeight: 70, background: '#CCCCCC', color: '#000000', border: '3px solid #000000', borderRadius: 0, boxShadow: '4px 4px 0px #000000' }}
               onTouchStart={(e) => { e.preventDefault(); handleDirection("DOWN"); }}
-              onClick={() => handleDirection("DOWN")}>▼</button>
-            <button className="retro-btn aspect-square flex items-center justify-center text-lg h-16 sm:h-20"
+              onClick={() => handleDirection("DOWN")}
+            >▼</button>
+            <button
+              className="flex items-center justify-center text-2xl font-bold select-none"
+              style={{ minWidth: 70, minHeight: 70, background: '#CCCCCC', color: '#000000', border: '3px solid #000000', borderRadius: 0, boxShadow: '4px 4px 0px #000000' }}
               onTouchStart={(e) => { e.preventDefault(); handleDirection("RIGHT"); }}
-              onClick={() => handleDirection("RIGHT")}>►</button>
+              onClick={() => handleDirection("RIGHT")}
+            >►</button>
           </div>
         </div>
 
