@@ -678,6 +678,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                     onPointerUp={stopDrawing}
                     onPointerCancel={stopDrawing}
                     onPointerLeave={stopDrawing}
+                    onTouchStart={(e) => e.preventDefault()}
+                    onTouchEnd={(e) => e.preventDefault()}
                   />
                 </div>
               )}
