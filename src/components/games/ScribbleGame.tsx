@@ -203,7 +203,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       window.removeEventListener("resize", resizeCanvas);
       window.removeEventListener("orientationchange", resizeCanvas);
     };
-  }, [resizeCanvas, lobby?.status, mobileTab, isMobile]);
+  }, [resizeCanvas, lobby?.status, isMobile]);
 
   const drawStroke = useCallback((points: DrawPoint[]) => {
     const canvas = canvasRef.current;
