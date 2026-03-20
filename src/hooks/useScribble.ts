@@ -294,15 +294,14 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
 
   const joinLobby = async () => {
     if (!lobbyId) return;
-    const existing = players.find(p => p.user_id === guestId);
-    if (existing) return;
 
-    const { error } = await supabase.from('scribble_players').insert({
+    const { error } = await supabase.from('scribble_players').upsert({
       lobby_id: lobbyId,
       user_id: guestId,
       username,
       avatar_url: null,
-    });
+      last_seen: new Date().toISOString(),
+    }, { onConflict: 'lobby_id,user_id' });
     if (error) {
       toast({ title: 'Kunde inte gå med', description: error.message, variant: 'destructive' });
     }
