@@ -146,13 +146,13 @@ export function useScribbleLobbies(guestId: string, guestUsername: string | null
       return null;
     }
 
-    // Auto-join
-    await supabase.from('scribble_players').insert({
+    // Auto-join (upsert to avoid duplicates)
+    await supabase.from('scribble_players').upsert({
       lobby_id: data.id,
       user_id: guestId,
       username,
       avatar_url: null,
-    });
+    }, { onConflict: 'lobby_id,user_id' });
 
     return data;
   };
