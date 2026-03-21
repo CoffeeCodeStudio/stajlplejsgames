@@ -430,9 +430,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   };
 
   const handleGuess = async () => {
-    if (!guessText.trim()) return;
+    if (!guessText.trim() || hasGuessedCorrectly) return;
     const isCorrect = await submitGuess(guessText.trim());
     if (isCorrect) {
+      setHasGuessedCorrectly(true);
       playCorrectSound();
       fireConfetti();
       toast({ title: "🎉 Rätt svar!" });
@@ -440,19 +441,27 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     setGuessText("");
   };
 
-  // Auto-advance turn when a correct guess is detected (drawer reacts to DB change)
+  // Auto-advance turn when a correct guess is detected (drawer only, once per round)
   const lastAdvancedGuessRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isDrawer || !lobby || lobby.status !== 'playing') return;
     const correctGuess = guesses.filter(g => g.is_correct).pop();
     if (!correctGuess) return;
     if (lastAdvancedGuessRef.current === correctGuess.id) return;
+    if (roundEndedRef.current) return; // Already ending this round
+    
+    roundEndedRef.current = true;
     lastAdvancedGuessRef.current = correctGuess.id;
     
-    // Advance after 3 seconds so everyone sees the result
     const timer = setTimeout(() => advanceTurn(), 3000);
     return () => clearTimeout(timer);
   }, [guesses, isDrawer, lobby?.status]); // eslint-disable-line
+
+  // Reset round state when round changes
+  useEffect(() => {
+    roundEndedRef.current = false;
+    setHasGuessedCorrectly(false);
+  }, [lobby?.round_number]);
 
   const advanceTurn = async () => {
     if (!lobby || players.length === 0) return;
