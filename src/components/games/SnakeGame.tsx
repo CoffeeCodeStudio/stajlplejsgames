@@ -222,6 +222,7 @@ export function SnakeGame({ onBack, username }: Props) {
 
     const finalScore = scoreRef.current;
     const apples = applesRef.current;
+    const timePlayed = secondsRef.current;
 
     setScore(finalScore);
     setApplesEaten(apples);
@@ -235,9 +236,9 @@ export function SnakeGame({ onBack, username }: Props) {
       playVictorySound();
     }
 
-    saveScore(finalScore, apples, seconds);
+    saveScore(finalScore, apples, timePlayed);
     fetchLeaderboard();
-  }, [highScore, saveScore, fetchLeaderboard, seconds]);
+  }, [highScore, saveScore, fetchLeaderboard]);
 
   const tick = useCallback(() => {
     const snake = snakeRef.current;
