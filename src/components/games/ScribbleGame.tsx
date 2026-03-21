@@ -55,6 +55,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMobile = useIsMobile();
   const lastSeenCorrectRef = useRef<string | null>(null);
+  const [hasGuessedCorrectly, setHasGuessedCorrectly] = useState(false);
+  const roundEndedRef = useRef(false);
 
   const isDrawingRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
