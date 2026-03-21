@@ -1,0 +1,1 @@
+DELETE FROM snake_highscores WHERE username IN ('Gäst', 'Anonym', '') OR username IS NULL;
