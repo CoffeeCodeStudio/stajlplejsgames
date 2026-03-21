@@ -45,6 +45,7 @@ interface Props {
 }
 
 export function SnakeGame({ onBack, username }: Props) {
+  const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
