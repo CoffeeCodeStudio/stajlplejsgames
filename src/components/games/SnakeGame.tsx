@@ -97,8 +97,9 @@ export function SnakeGame({ onBack, username }: Props) {
       localStorage.setItem(localKey, String(finalScore));
     }
 
-    // Only save to database if ?usr= is set
-    if (!username) return;
+    // Only save to database if ?usr= is set and not a generic name
+    const BLOCKED_NAMES = ['gäst', 'anonym', 'guest', 'anonymous'];
+    if (!username || BLOCKED_NAMES.includes(username.toLowerCase())) return;
 
     // Check if player already has a higher score in DB
     const { data: existing } = await supabase
