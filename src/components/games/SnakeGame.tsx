@@ -87,32 +87,40 @@ export function SnakeGame({ onBack, username }: Props) {
   }, []);
 
   const saveScore = useCallback(async (finalScore: number, apples: number, timeSec: number) => {
-    const playerName = username || 'Anonym';
     if (scoreSaved) return;
     setScoreSaved(true);
-    
-    // Check if player already has a higher score
+
+    // Always save to localStorage
+    const localKey = 'snake-best';
+    const localBest = parseInt(localStorage.getItem(localKey) || '0');
+    if (finalScore > localBest) {
+      localStorage.setItem(localKey, String(finalScore));
+    }
+
+    // Only save to database if ?usr= is set
+    if (!username) return;
+
+    // Check if player already has a higher score in DB
     const { data: existing } = await supabase
       .from('snake_highscores')
       .select('id, score')
-      .eq('username', playerName)
+      .eq('username', username)
       .order('score', { ascending: false })
       .limit(1);
-    
+
     if (existing && existing.length > 0 && existing[0].score >= finalScore) {
-      // Existing score is higher, don't save
       return;
     }
-    
+
     await supabase.from('snake_highscores').insert({
       user_id: '00000000-0000-0000-0000-000000000000',
-      username: playerName,
+      username: username,
       avatar_url: null,
       score: finalScore,
       apples_eaten: apples,
       time_seconds: timeSec,
     });
-    
+
     toast({ title: "🏆 Ditt rekord har sparats!" });
   }, [username, scoreSaved]);
 
