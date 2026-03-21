@@ -115,12 +115,16 @@ export function ScribbleLobbyList({ onJoinLobby, guestId, guestUsername }: Scrib
                       </span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => onJoinLobby(lobby.id)}
-                    className="retro-btn retro-btn-primary font-pixel text-[8px] shrink-0"
-                  >
-                    Hoppa in
-                  </button>
+                  {lobby.status === 'playing' ? (
+                    <span className="text-[8px] font-pixel text-muted-foreground italic px-2">Pågår...</span>
+                  ) : (
+                    <button
+                      onClick={() => onJoinLobby(lobby.id)}
+                      className="retro-btn retro-btn-primary font-pixel text-[8px] shrink-0"
+                    >
+                      Hoppa in
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
