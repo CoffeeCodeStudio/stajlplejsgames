@@ -724,6 +724,16 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                     onTouchStart={(e) => e.preventDefault()}
                     onTouchEnd={(e) => e.preventDefault()}
                   />
+                  {/* Round winner banner */}
+                  {roundEnding && roundWinner && (
+                    <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/70 pointer-events-none">
+                      <div className="text-center space-y-1 p-4">
+                        <p className="font-pixel text-sm text-green-500">🎉 {roundWinner.username} gissade rätt!</p>
+                        <p className="text-xs text-muted-foreground">Rätt ord var: <span className="font-bold text-foreground">{roundWinner.word}</span></p>
+                        <p className="text-[10px] text-muted-foreground/60 animate-pulse">Nästa runda om 3 sekunder...</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
