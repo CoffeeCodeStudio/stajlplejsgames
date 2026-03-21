@@ -640,7 +640,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                   <Button variant="ghost" size="icon" onClick={handleClear} className="h-6 w-6 shrink-0">
                     <Paintbrush className="w-3.5 h-3.5" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => advanceTurn()} className="h-6 ml-auto text-xs shrink-0 whitespace-nowrap">
+                  <Button variant="ghost" size="sm" onClick={() => advanceTurn()} disabled={roundEnding} className="h-6 ml-auto text-xs shrink-0 whitespace-nowrap">
                     <SkipForward className="w-3 h-3 mr-1" /> Hoppa
                   </Button>
                 </div>
