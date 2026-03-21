@@ -54,6 +54,7 @@ export function SnakeGame({ onBack, username }: Props) {
   const scoreRef = useRef(0);
   const applesRef = useRef(0);
   const speedRef = useRef(INITIAL_SPEED);
+  const secondsRef = useRef(0);
 
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover" | "leaderboard">("menu");
   const [score, setScore] = useState(0);
