@@ -787,23 +787,21 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                 <div className="p-1.5 border-t border-border flex gap-1.5 shrink-0">
                   {isDrawer ? (
                     <p className="text-[10px] text-muted-foreground italic px-1 py-1">Du ritar — vänta på gissningar</p>
+                  ) : hasGuessedCorrectly ? (
+                    <p className="text-xs text-green-400 font-bold px-1 py-1">🎉 Rätt! Väntar på nästa runda...</p>
                   ) : (
-                    {hasGuessedCorrectly ? (
-                      <p className="text-xs text-green-400 font-bold px-1 py-1">🎉 Rätt! Väntar på nästa runda...</p>
-                    ) : (
-                      <>
-                        <Input
-                          value={guessText}
-                          onChange={(e) => setGuessText(e.target.value)}
-                          placeholder="Gissa..."
-                          className="text-sm h-7"
-                          onKeyDown={(e) => e.key === "Enter" && handleGuess()}
-                        />
-                        <Button size="icon" onClick={handleGuess} className="h-7 w-7 shrink-0">
-                          <Send className="w-3 h-3" />
-                        </Button>
-                      </>
-                    )}
+                    <>
+                      <Input
+                        value={guessText}
+                        onChange={(e) => setGuessText(e.target.value)}
+                        placeholder="Gissa..."
+                        className="text-sm h-7"
+                        onKeyDown={(e) => e.key === "Enter" && handleGuess()}
+                      />
+                      <Button size="icon" onClick={handleGuess} className="h-7 w-7 shrink-0">
+                        <Send className="w-3 h-3" />
+                      </Button>
+                    </>
                   )}
                 </div>
               )}
