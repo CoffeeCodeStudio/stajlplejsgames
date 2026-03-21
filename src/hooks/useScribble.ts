@@ -274,16 +274,34 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
         await supabase.from('scribble_lobbies').update({ status: 'finished' }).eq('id', lobbyId);
         await supabase.from('scribble_lobbies').delete().eq('id', lobbyId);
       } else {
-        // If any stale player was the current drawer, advance turn
         const currentLobby = lobby;
         const staleIds = stalePlayers.map(s => s.user_id);
+        const updates: Record<string, unknown> = {};
+
+        // If host was removed, transfer to oldest remaining
+        if (currentLobby?.creator_id && staleIds.includes(currentLobby.creator_id)) {
+          // Fetch with order to get oldest
+          const { data: ordered } = await supabase
+            .from('scribble_players')
+            .select('user_id, username')
+            .eq('lobby_id', lobbyId)
+            .order('joined_at', { ascending: true })
+            .limit(1);
+          if (ordered && ordered.length > 0) {
+            updates.creator_id = ordered[0].user_id;
+            updates.creator_username = ordered[0].username;
+          }
+        }
+
+        // If drawer was removed, advance turn
         if (currentLobby?.current_drawer_id && staleIds.includes(currentLobby.current_drawer_id)) {
-          const nextDrawer = remainingPlayers[0];
-          await supabase.from('scribble_lobbies').update({
-            current_drawer_id: nextDrawer.user_id,
-            current_word: null,
-            round_number: (currentLobby.round_number || 0) + 1,
-          }).eq('id', lobbyId);
+          updates.current_drawer_id = remainingPlayers[0].user_id;
+          updates.current_word = null;
+          updates.round_number = (currentLobby.round_number || 0) + 1;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await supabase.from('scribble_lobbies').update(updates).eq('id', lobbyId);
         }
       }
     };
