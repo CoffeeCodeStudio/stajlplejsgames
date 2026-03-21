@@ -434,12 +434,23 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       playCorrectSound();
       fireConfetti();
       toast({ title: "🎉 Rätt svar!" });
-      if (isDrawer || isCreator) {
-        setTimeout(() => advanceTurn(), 2000);
-      }
     }
     setGuessText("");
   };
+
+  // Auto-advance turn when a correct guess is detected (drawer reacts to DB change)
+  const lastAdvancedGuessRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isDrawer || !lobby || lobby.status !== 'playing') return;
+    const correctGuess = guesses.filter(g => g.is_correct).pop();
+    if (!correctGuess) return;
+    if (lastAdvancedGuessRef.current === correctGuess.id) return;
+    lastAdvancedGuessRef.current = correctGuess.id;
+    
+    // Advance after 3 seconds so everyone sees the result
+    const timer = setTimeout(() => advanceTurn(), 3000);
+    return () => clearTimeout(timer);
+  }, [guesses, isDrawer, lobby?.status]); // eslint-disable-line
 
   const advanceTurn = async () => {
     if (!lobby || players.length === 0) return;

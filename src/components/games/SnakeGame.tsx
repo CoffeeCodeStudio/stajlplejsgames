@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fireConfetti, playVictorySound, playGameOverSound, playPickupSound } from "@/lib/game-effects";
+import { useToast } from "@/hooks/use-toast";
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 16;
@@ -44,6 +45,7 @@ interface Props {
 }
 
 export function SnakeGame({ onBack, username }: Props) {
+  const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -54,6 +56,7 @@ export function SnakeGame({ onBack, username }: Props) {
   const scoreRef = useRef(0);
   const applesRef = useRef(0);
   const speedRef = useRef(INITIAL_SPEED);
+  const secondsRef = useRef(0);
 
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover" | "leaderboard">("menu");
   const [score, setScore] = useState(0);
@@ -84,16 +87,33 @@ export function SnakeGame({ onBack, username }: Props) {
   }, []);
 
   const saveScore = useCallback(async (finalScore: number, apples: number, timeSec: number) => {
-    if (!username || scoreSaved) return;
+    const playerName = username || 'Anonym';
+    if (scoreSaved) return;
     setScoreSaved(true);
+    
+    // Check if player already has a higher score
+    const { data: existing } = await supabase
+      .from('snake_highscores')
+      .select('id, score')
+      .eq('username', playerName)
+      .order('score', { ascending: false })
+      .limit(1);
+    
+    if (existing && existing.length > 0 && existing[0].score >= finalScore) {
+      // Existing score is higher, don't save
+      return;
+    }
+    
     await supabase.from('snake_highscores').insert({
       user_id: '00000000-0000-0000-0000-000000000000',
-      username: username,
+      username: playerName,
       avatar_url: null,
       score: finalScore,
       apples_eaten: apples,
       time_seconds: timeSec,
     });
+    
+    toast({ title: "🏆 Ditt rekord har sparats!" });
   }, [username, scoreSaved]);
 
   const drawGame = useCallback(() => {
@@ -204,6 +224,7 @@ export function SnakeGame({ onBack, username }: Props) {
 
     const finalScore = scoreRef.current;
     const apples = applesRef.current;
+    const timePlayed = secondsRef.current;
 
     setScore(finalScore);
     setApplesEaten(apples);
@@ -217,9 +238,9 @@ export function SnakeGame({ onBack, username }: Props) {
       playVictorySound();
     }
 
-    saveScore(finalScore, apples, seconds);
+    saveScore(finalScore, apples, timePlayed);
     fetchLeaderboard();
-  }, [highScore, saveScore, fetchLeaderboard, seconds]);
+  }, [highScore, saveScore, fetchLeaderboard]);
 
   const tick = useCallback(() => {
     const snake = snakeRef.current;
@@ -290,7 +311,11 @@ export function SnakeGame({ onBack, username }: Props) {
 
   useEffect(() => {
     if (gameState === "playing") {
-      timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
+      secondsRef.current = 0;
+      timerRef.current = setInterval(() => {
+        secondsRef.current += 1;
+        setSeconds(s => s + 1);
+      }, 1000);
       return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }
   }, [gameState]);
