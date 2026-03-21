@@ -295,6 +295,16 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
   const joinLobby = async () => {
     if (!lobbyId) return;
 
+    // Block joining if game is already playing
+    if (lobby?.status === 'playing') {
+      // Check if we're already a player (reconnecting)
+      const alreadyIn = players.some(p => p.user_id === guestId);
+      if (!alreadyIn) {
+        toast({ title: 'Spelet har redan börjat!', description: 'Vänta på nästa omgång.', variant: 'destructive' });
+        return false;
+      }
+    }
+
     const { error } = await supabase.from('scribble_players').upsert({
       lobby_id: lobbyId,
       user_id: guestId,
@@ -304,7 +314,9 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
     }, { onConflict: 'lobby_id,user_id' });
     if (error) {
       toast({ title: 'Kunde inte gå med', description: error.message, variant: 'destructive' });
+      return false;
     }
+    return true;
   };
 
   const submitGuess = async (guess: string) => {
