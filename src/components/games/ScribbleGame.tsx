@@ -446,23 +446,30 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   // Auto-advance turn when a correct guess is detected (drawer only, once per round)
   const lastAdvancedGuessRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!isDrawer || !lobby || lobby.status !== 'playing') return;
+    if (!lobby || lobby.status !== 'playing') return;
     const correctGuess = guesses.filter(g => g.is_correct).pop();
     if (!correctGuess) return;
     if (lastAdvancedGuessRef.current === correctGuess.id) return;
-    if (roundEndedRef.current) return; // Already ending this round
+    if (roundEndedRef.current) return;
     
     roundEndedRef.current = true;
     lastAdvancedGuessRef.current = correctGuess.id;
+    setRoundEnding(true);
+    setRoundWinner({ username: correctGuess.username, word: lobby.current_word || '?' });
     
-    const timer = setTimeout(() => advanceTurn(), 3000);
-    return () => clearTimeout(timer);
+    // Auto-advance after 3 seconds — any player that is the drawer triggers it
+    if (isDrawer) {
+      const timer = setTimeout(() => advanceTurn(), 3000);
+      return () => clearTimeout(timer);
+    }
   }, [guesses, isDrawer, lobby?.status]); // eslint-disable-line
 
   // Reset round state when round changes
   useEffect(() => {
     roundEndedRef.current = false;
     setHasGuessedCorrectly(false);
+    setRoundEnding(false);
+    setRoundWinner(null);
   }, [lobby?.round_number]);
 
   const advanceTurn = async () => {
