@@ -1,0 +1,1 @@
+DELETE FROM snake_highscores WHERE LOWER(username) IN ('användarnamn', 'anvndarnamn', 'namn', 'gäst', 'anonym', 'guest', 'anonymous', 'test', 'user', 'namn');
