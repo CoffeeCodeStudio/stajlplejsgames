@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fireConfetti, playVictorySound, playGameOverSound, playPickupSound } from "@/lib/game-effects";
+import { useToast } from "@/hooks/use-toast";
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 16;
