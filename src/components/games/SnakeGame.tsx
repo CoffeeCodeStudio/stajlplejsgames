@@ -309,7 +309,11 @@ export function SnakeGame({ onBack, username }: Props) {
 
   useEffect(() => {
     if (gameState === "playing") {
-      timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
+      secondsRef.current = 0;
+      timerRef.current = setInterval(() => {
+        secondsRef.current += 1;
+        setSeconds(s => s + 1);
+      }, 1000);
       return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }
   }, [gameState]);
