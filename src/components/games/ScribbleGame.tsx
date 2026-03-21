@@ -57,6 +57,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const lastSeenCorrectRef = useRef<string | null>(null);
   const [hasGuessedCorrectly, setHasGuessedCorrectly] = useState(false);
   const roundEndedRef = useRef(false);
+  const [roundEnding, setRoundEnding] = useState(false);
+  const [roundWinner, setRoundWinner] = useState<{ username: string; word: string } | null>(null);
 
   const isDrawingRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
@@ -444,23 +446,30 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   // Auto-advance turn when a correct guess is detected (drawer only, once per round)
   const lastAdvancedGuessRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!isDrawer || !lobby || lobby.status !== 'playing') return;
+    if (!lobby || lobby.status !== 'playing') return;
     const correctGuess = guesses.filter(g => g.is_correct).pop();
     if (!correctGuess) return;
     if (lastAdvancedGuessRef.current === correctGuess.id) return;
-    if (roundEndedRef.current) return; // Already ending this round
+    if (roundEndedRef.current) return;
     
     roundEndedRef.current = true;
     lastAdvancedGuessRef.current = correctGuess.id;
+    setRoundEnding(true);
+    setRoundWinner({ username: correctGuess.username, word: lobby.current_word || '?' });
     
-    const timer = setTimeout(() => advanceTurn(), 3000);
-    return () => clearTimeout(timer);
+    // Auto-advance after 3 seconds — any player that is the drawer triggers it
+    if (isDrawer) {
+      const timer = setTimeout(() => advanceTurn(), 3000);
+      return () => clearTimeout(timer);
+    }
   }, [guesses, isDrawer, lobby?.status]); // eslint-disable-line
 
   // Reset round state when round changes
   useEffect(() => {
     roundEndedRef.current = false;
     setHasGuessedCorrectly(false);
+    setRoundEnding(false);
+    setRoundWinner(null);
   }, [lobby?.round_number]);
 
   const advanceTurn = async () => {
@@ -631,7 +640,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                   <Button variant="ghost" size="icon" onClick={handleClear} className="h-6 w-6 shrink-0">
                     <Paintbrush className="w-3.5 h-3.5" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => advanceTurn()} className="h-6 ml-auto text-xs shrink-0 whitespace-nowrap">
+                  <Button variant="ghost" size="sm" onClick={() => advanceTurn()} disabled={roundEnding} className="h-6 ml-auto text-xs shrink-0 whitespace-nowrap">
                     <SkipForward className="w-3 h-3 mr-1" /> Hoppa
                   </Button>
                 </div>
@@ -715,6 +724,16 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                     onTouchStart={(e) => e.preventDefault()}
                     onTouchEnd={(e) => e.preventDefault()}
                   />
+                  {/* Round winner banner */}
+                  {roundEnding && roundWinner && (
+                    <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/70 pointer-events-none">
+                      <div className="text-center space-y-1 p-4">
+                        <p className="font-pixel text-sm text-green-500">🎉 {roundWinner.username} gissade rätt!</p>
+                        <p className="text-xs text-muted-foreground">Rätt ord var: <span className="font-bold text-foreground">{roundWinner.word}</span></p>
+                        <p className="text-[10px] text-muted-foreground/60 animate-pulse">Nästa runda om 3 sekunder...</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
