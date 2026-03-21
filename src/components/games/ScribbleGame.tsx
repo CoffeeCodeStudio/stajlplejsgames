@@ -656,16 +656,16 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                     <Users className="w-10 h-10 mx-auto text-muted-foreground/50" />
                     <h3 className="font-pixel text-[10px] text-foreground">Spelare i lobbyn</h3>
                     <div className="space-y-1.5">
-                      {players.map((p, i) => (
+                      {players.map((p) => (
                         <div key={p.id} className="flex items-center justify-between bg-muted/50 rounded px-3 py-1.5 text-sm">
                           <span className="truncate">
-                            {i === 0 ? "👑 " : ""}{p.username}
+                            {p.user_id === lobby?.creator_id ? "👑 " : ""}{p.username}
                           </span>
-                          {i === 0 && <span className="text-[10px] text-muted-foreground font-pixel">HOST</span>}
+                          {p.user_id === lobby?.creator_id && <span className="text-[10px] text-muted-foreground font-pixel">HOST</span>}
                         </div>
                       ))}
                     </div>
-                    {players.length > 0 && players[0].user_id === guestId ? (
+                    {lobby?.creator_id === guestId ? (
                       <>
                         <Button
                           disabled={players.length < 2}

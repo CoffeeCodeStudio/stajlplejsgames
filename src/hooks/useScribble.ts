@@ -274,16 +274,34 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
         await supabase.from('scribble_lobbies').update({ status: 'finished' }).eq('id', lobbyId);
         await supabase.from('scribble_lobbies').delete().eq('id', lobbyId);
       } else {
-        // If any stale player was the current drawer, advance turn
         const currentLobby = lobby;
         const staleIds = stalePlayers.map(s => s.user_id);
+        const updates: Record<string, unknown> = {};
+
+        // If host was removed, transfer to oldest remaining
+        if (currentLobby?.creator_id && staleIds.includes(currentLobby.creator_id)) {
+          // Fetch with order to get oldest
+          const { data: ordered } = await supabase
+            .from('scribble_players')
+            .select('user_id, username')
+            .eq('lobby_id', lobbyId)
+            .order('joined_at', { ascending: true })
+            .limit(1);
+          if (ordered && ordered.length > 0) {
+            updates.creator_id = ordered[0].user_id;
+            updates.creator_username = ordered[0].username;
+          }
+        }
+
+        // If drawer was removed, advance turn
         if (currentLobby?.current_drawer_id && staleIds.includes(currentLobby.current_drawer_id)) {
-          const nextDrawer = remainingPlayers[0];
-          await supabase.from('scribble_lobbies').update({
-            current_drawer_id: nextDrawer.user_id,
-            current_word: null,
-            round_number: (currentLobby.round_number || 0) + 1,
-          }).eq('id', lobbyId);
+          updates.current_drawer_id = remainingPlayers[0].user_id;
+          updates.current_word = null;
+          updates.round_number = (currentLobby.round_number || 0) + 1;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await supabase.from('scribble_lobbies').update(updates).eq('id', lobbyId);
         }
       }
     };
@@ -295,6 +313,16 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
   const joinLobby = async () => {
     if (!lobbyId) return;
 
+    // Block joining if game is already playing
+    if (lobby?.status === 'playing') {
+      // Check if we're already a player (reconnecting)
+      const alreadyIn = players.some(p => p.user_id === guestId);
+      if (!alreadyIn) {
+        toast({ title: 'Spelet har redan börjat!', description: 'Vänta på nästa omgång.', variant: 'destructive' });
+        return false;
+      }
+    }
+
     const { error } = await supabase.from('scribble_players').upsert({
       lobby_id: lobbyId,
       user_id: guestId,
@@ -304,7 +332,9 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
     }, { onConflict: 'lobby_id,user_id' });
     if (error) {
       toast({ title: 'Kunde inte gå med', description: error.message, variant: 'destructive' });
+      return false;
     }
+    return true;
   };
 
   const submitGuess = async (guess: string) => {
@@ -349,8 +379,9 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
     // Check remaining players
     const { data: remaining } = await supabase
       .from('scribble_players')
-      .select('user_id')
-      .eq('lobby_id', lobbyId);
+      .select('user_id, username')
+      .eq('lobby_id', lobbyId)
+      .order('joined_at', { ascending: true });
 
     const remainingPlayers = remaining || [];
 
@@ -359,14 +390,26 @@ export function useScribbleGame(lobbyId: string | null, guestId: string, guestUs
       await supabase.from('scribble_guesses').delete().eq('lobby_id', lobbyId);
       await supabase.from('scribble_lobbies').update({ status: 'finished' }).eq('id', lobbyId);
       await supabase.from('scribble_lobbies').delete().eq('id', lobbyId);
-    } else if (lobby?.current_drawer_id === guestId && lobby?.status === 'playing') {
-      // Drawer left — advance to next player
-      const nextDrawer = remainingPlayers[0];
-      await supabase.from('scribble_lobbies').update({
-        current_drawer_id: nextDrawer.user_id,
-        current_word: null,
-        round_number: (lobby.round_number || 0) + 1,
-      }).eq('id', lobbyId);
+    } else {
+      const updates: Record<string, unknown> = {};
+
+      // If host left, transfer to next player (oldest by joined_at)
+      if (lobby?.creator_id === guestId) {
+        const newHost = remainingPlayers[0];
+        updates.creator_id = newHost.user_id;
+        updates.creator_username = newHost.username;
+      }
+
+      // If drawer left during playing, advance turn
+      if (lobby?.current_drawer_id === guestId && lobby?.status === 'playing') {
+        updates.current_drawer_id = remainingPlayers[0].user_id;
+        updates.current_word = null;
+        updates.round_number = (lobby.round_number || 0) + 1;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await supabase.from('scribble_lobbies').update(updates).eq('id', lobbyId);
+      }
     }
   };
 
