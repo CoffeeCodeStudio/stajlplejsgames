@@ -665,7 +665,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
                         </div>
                       ))}
                     </div>
-                    {players.length > 0 && players[0].user_id === guestId ? (
+                    {lobby?.creator_id === guestId ? (
                       <>
                         <Button
                           disabled={players.length < 2}
