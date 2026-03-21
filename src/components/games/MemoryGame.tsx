@@ -169,7 +169,7 @@ export function MemoryGame({ onBack, username }: Props) {
     }
   }, []);
 
-  const INVALID_USERNAMES = new Set(["firefox", "chrome", "safari", "edge", "opera", "brave", "vivaldi", "chromium"]);
+  const INVALID_USERNAMES = new Set(["firefox", "chrome", "safari", "edge", "opera", "brave", "vivaldi", "chromium", "gäst", "anonym", "guest", "anonymous", "användarnamn", "anvndarnamn", "namn", "test", "user"]);
 
   const fetchLeaderboard = useCallback(async (diff: Difficulty) => {
     const { data } = await supabase
