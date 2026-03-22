@@ -587,36 +587,41 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     setTimeLeft(0);
 
     const currentRound = lobby.round_number || 0;
+    const iAmResponsible = isDrawer || isCreator;
 
-    // Force temporary result status for synchronized pause state
-    void supabase
-      .from('scribble_lobbies')
-      .update({ status: 'showing_result' })
-      .eq('id', lobbyId)
-      .eq('round_number', currentRound)
-      .eq('status', 'playing');
-
-    // After 3s: force next round regardless of timer state
-    if (roundAdvanceTimeoutRef.current) {
-      clearTimeout(roundAdvanceTimeoutRef.current);
+    // Force temporary result status for synchronized pause state (only one client writes)
+    if (iAmResponsible) {
+      void supabase
+        .from('scribble_lobbies')
+        .update({ status: 'showing_result' })
+        .eq('id', lobbyId)
+        .eq('round_number', currentRound)
+        .eq('status', 'playing');
     }
-    roundAdvanceTimeoutRef.current = setTimeout(async () => {
-      await forceNextRound(currentRound);
 
-      // Fallback: if still stuck in showing_result after 1s, retry
-      setTimeout(async () => {
-        const { data } = await supabase
-          .from('scribble_lobbies')
-          .select('status, round_number')
-          .eq('id', lobbyId)
-          .single();
-        if (data && data.status === 'showing_result' && data.round_number === currentRound) {
-          console.warn('[Scribble] Fallback: lobby stuck in showing_result, retrying forceNextRound');
-          await forceNextRound(currentRound);
-        }
-      }, 1000);
-    }, 3000);
-  }, [forceNextRound, guesses, lobby, lobbyId]);
+    // After 3s: force next round (only drawer/host triggers)
+    if (iAmResponsible) {
+      if (roundAdvanceTimeoutRef.current) {
+        clearTimeout(roundAdvanceTimeoutRef.current);
+      }
+      roundAdvanceTimeoutRef.current = setTimeout(async () => {
+        await forceNextRound(currentRound);
+
+        // Fallback: if still stuck in showing_result after 1s, retry
+        setTimeout(async () => {
+          const { data } = await supabase
+            .from('scribble_lobbies')
+            .select('status, round_number')
+            .eq('id', lobbyId)
+            .single();
+          if (data && data.status === 'showing_result' && data.round_number === currentRound) {
+            console.warn('[Scribble] Fallback: lobby stuck in showing_result, retrying forceNextRound');
+            await forceNextRound(currentRound);
+          }
+        }, 1000);
+      }, 3000);
+    }
+  }, [forceNextRound, guesses, lobby, lobbyId, isDrawer, isCreator]);
 
   // Reset round state when round changes
   useEffect(() => {
