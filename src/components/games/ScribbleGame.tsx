@@ -7,7 +7,7 @@ import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { playCorrectSound, fireConfetti, playTickSound, playBuzzerSound, playPenDownSound, startDrawNoise, stopDrawNoise } from "@/lib/game-effects";
+import { playCorrectSound, fireConfetti, playTickSound, playBuzzerSound, playPenDownSound, playScribbleBurst } from "@/lib/game-effects";
 
 interface DrawPoint {
   x: number;
@@ -457,7 +457,6 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     activePointerIdRef.current = e.pointerId;
     isDrawingRef.current = true;
     playPenDownSound();
-    startDrawNoise();
 
     const pos = getPos(e);
 
@@ -498,6 +497,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
     currentStrokeRef.current.push(point);
     pendingPoints.current.push(point);
+    playScribbleBurst();
     requestFlush();
   };
 
@@ -523,7 +523,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       });
     }
 
-    stopDrawNoise();
+    // no-op: scribble bursts are self-contained
     isDrawingRef.current = false;
     activePointerIdRef.current = null;
     currentStrokeRef.current = [];
