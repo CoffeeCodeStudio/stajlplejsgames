@@ -105,7 +105,13 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   }, [lobby?.status]); // eslint-disable-line
 
   useEffect(() => {
-    guessEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = guessEndRef.current;
+    if (el) {
+      const scrollParent = el.closest('[data-radix-scroll-area-viewport]') || el.parentElement;
+      if (scrollParent) {
+        scrollParent.scrollTop = scrollParent.scrollHeight;
+      }
+    }
     // Notify drawer when someone guesses correctly
     if (isDrawer && guesses.length > 0) {
       const latest = guesses[guesses.length - 1];
