@@ -386,7 +386,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          if (advancedForRoundRef.current !== currentRound) {
+          if ((isDrawer || isCreator) && advancedForRoundRef.current !== currentRound) {
             advancedForRoundRef.current = currentRound;
             playBuzzerSound();
             void forceNextRound(currentRound);
