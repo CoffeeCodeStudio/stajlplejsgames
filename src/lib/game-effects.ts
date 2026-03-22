@@ -210,6 +210,7 @@ export function playBuzzerSound() {
     osc2.stop(now + 0.5);
   } catch {
     // Audio not available
+  }
 }
 
 // ── Drawing SFX ──
