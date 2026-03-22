@@ -523,6 +523,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       });
     }
 
+    stopDrawNoise();
     isDrawingRef.current = false;
     activePointerIdRef.current = null;
     currentStrokeRef.current = [];
