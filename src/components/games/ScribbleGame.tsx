@@ -503,7 +503,11 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     currentStrokeRef.current.push(point);
     pendingPoints.current.push(point);
     broadcastBatchRef.current.push(point);
-    playScribbleBurst();
+    const now = performance.now();
+    if (now - lastSoundTimeRef.current > 100) {
+      lastSoundTimeRef.current = now;
+      playScribbleBurst();
+    }
     requestFlush();
 
     // Send live broadcast every 5 points or every 80ms
