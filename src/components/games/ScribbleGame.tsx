@@ -462,6 +462,13 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     setRoundEnding(true);
     setRoundWinner({ username: correctGuess.username, word: lobby.current_word || '?' });
     
+    // Kill the round timer immediately — don't wait for it to reach zero
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setTimeLeft(0);
+    
     // Auto-advance after 3 seconds — any player that is the drawer triggers it
     if (isDrawer) {
       const timer = setTimeout(() => advanceTurn(), 3000);
