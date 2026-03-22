@@ -215,8 +215,7 @@ export function playBuzzerSound() {
 
 // ── Drawing SFX ──
 
-let drawNoiseNode: AudioBufferSourceNode | null = null;
-let drawGainNode: GainNode | null = null;
+let lastScribbleTime = 0;
 
 /** Short pen-down click */
 export function playPenDownSound() {
@@ -226,69 +225,66 @@ export function playPenDownSound() {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(2000, now);
-    osc.frequency.exponentialRampToValueAtTime(800, now + 0.03);
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc.frequency.setValueAtTime(1800 + Math.random() * 400, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.025);
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
     osc.connect(gain).connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.05);
+    osc.stop(now + 0.04);
   } catch {
     // Audio not available
   }
 }
 
-/** Start a looping scratch/scribble noise while drawing */
-export function startDrawNoise() {
-  try {
-    stopDrawNoise();
-    const ctx = getAudioCtx();
+/** Play a single short scribble burst — call from pointermove throttled */
+export function playScribbleBurst() {
+  const now = performance.now();
+  if (now - lastScribbleTime < 60) return; // max ~16 bursts/sec
+  lastScribbleTime = now;
 
-    // Generate a short buffer of filtered noise (pencil scratch texture)
+  try {
+    const ctx = getAudioCtx();
+    const t = ctx.currentTime;
+
+    // Short noise burst (20-40ms) shaped like a pen scratch
     const sampleRate = ctx.sampleRate;
-    const length = sampleRate * 0.15; // 150ms loop
+    const duration = 0.02 + Math.random() * 0.02; // 20-40ms
+    const length = Math.floor(sampleRate * duration);
     const buffer = ctx.createBuffer(1, length, sampleRate);
     const data = buffer.getChannelData(0);
+
+    // Brownian noise (smoother, more organic than white noise)
+    let last = 0;
     for (let i = 0; i < length; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.5;
+      last += (Math.random() * 2 - 1) * 0.15;
+      last = Math.max(-1, Math.min(1, last));
+      data[i] = last;
     }
 
     const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.loop = true;
+    // Pitch variation ±10%
+    source.playbackRate.value = 0.9 + Math.random() * 0.2;
 
-    // Bandpass filter to sound like pencil-on-paper
+    // Bandpass to sound like felt-tip on paper
     const filter = ctx.createBiquadFilter();
     filter.type = "bandpass";
-    filter.frequency.value = 3000;
-    filter.Q.value = 0.8;
+    filter.frequency.value = 2500 + Math.random() * 1500; // 2500-4000 Hz
+    filter.Q.value = 0.6;
 
     const gain = ctx.createGain();
-    gain.gain.value = 0.07; // ~10-15% volume, very subtle
+    gain.gain.setValueAtTime(0.03, t); // very subtle
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
 
     source.connect(filter).connect(gain).connect(ctx.destination);
-    source.start();
-
-    drawNoiseNode = source;
-    drawGainNode = gain;
+    source.start(t);
+    source.stop(t + duration + 0.01);
   } catch {
     // Audio not available
   }
 }
 
-/** Stop the drawing noise immediately */
-export function stopDrawNoise() {
-  try {
-    if (drawNoiseNode) {
-      drawNoiseNode.stop();
-      drawNoiseNode.disconnect();
-      drawNoiseNode = null;
-    }
-    if (drawGainNode) {
-      drawGainNode.disconnect();
-      drawGainNode = null;
-    }
-  } catch {
-    // Already stopped
-  }
-}
+/** No-op stubs kept for API compat */
+export function startDrawNoise() {}
+export function stopDrawNoise() {}
