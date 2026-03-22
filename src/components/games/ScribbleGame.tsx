@@ -685,6 +685,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
               {lobby.round_number}/{maxRounds}
             </span>
           )}
+          <Button variant="ghost" size="icon" onClick={toggleMute} className="h-6 w-6 text-primary-foreground hover:bg-primary-foreground/20 shrink-0" title={muted ? "Slå på ljud" : "Stäng av ljud"}>
+            {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+          </Button>
         </div>
       </div>
 
