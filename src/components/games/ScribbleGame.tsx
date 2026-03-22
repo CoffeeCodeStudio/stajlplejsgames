@@ -677,6 +677,12 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   };
 
   const handleLeave = async () => {
+    // Clean up drawing state and timers before leaving
+    isDrawingRef.current = false;
+    activePointerIdRef.current = null;
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (roundAdvanceTimeoutRef.current) { clearTimeout(roundAdvanceTimeoutRef.current); roundAdvanceTimeoutRef.current = null; }
+    if (rafId.current) { cancelAnimationFrame(rafId.current); rafId.current = 0; }
     await leaveLobby();
     onLeave();
   };
