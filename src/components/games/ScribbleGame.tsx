@@ -384,11 +384,16 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
         if (prev <= 1) {
           if (advancedForRoundRef.current !== currentRound) {
             advancedForRoundRef.current = currentRound;
+            playBuzzerSound();
             void forceNextRound(currentRound);
           }
           return 0;
         }
-        return prev - 1;
+        const next = prev - 1;
+        if (next > 0 && next <= 10) {
+          playTickSound();
+        }
+        return next;
       });
     }, 1000);
 
