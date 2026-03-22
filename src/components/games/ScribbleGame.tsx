@@ -575,8 +575,21 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     if (roundAdvanceTimeoutRef.current) {
       clearTimeout(roundAdvanceTimeoutRef.current);
     }
-    roundAdvanceTimeoutRef.current = setTimeout(() => {
-      void forceNextRound(currentRound);
+    roundAdvanceTimeoutRef.current = setTimeout(async () => {
+      await forceNextRound(currentRound);
+
+      // Fallback: if still stuck in showing_result after 1s, retry
+      setTimeout(async () => {
+        const { data } = await supabase
+          .from('scribble_lobbies')
+          .select('status, round_number')
+          .eq('id', lobbyId)
+          .single();
+        if (data && data.status === 'showing_result' && data.round_number === currentRound) {
+          console.warn('[Scribble] Fallback: lobby stuck in showing_result, retrying forceNextRound');
+          await forceNextRound(currentRound);
+        }
+      }, 1000);
     }, 3000);
   }, [forceNextRound, guesses, lobby, lobbyId]);
 
