@@ -252,7 +252,7 @@ export function playPenDownSound() {
 /** Play a single short scribble burst — call from pointermove throttled */
 export function playScribbleBurst() {
   const now = performance.now();
-  if (now - lastScribbleTime < 60) return; // max ~16 bursts/sec
+  if (now - lastScribbleTime < 100) return; // max ~10 bursts/sec
   lastScribbleTime = now;
 
   try {

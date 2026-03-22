@@ -66,6 +66,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const activePointerIdRef = useRef<number | null>(null);
   const currentStrokeRef = useRef<DrawPoint[]>([]);
   const pendingPoints = useRef<DrawPoint[]>([]);
+  const broadcastBatchRef = useRef<DrawPoint[]>([]);
+  const lastBroadcastTime = useRef(0);
   const rafId = useRef<number>(0);
   const canvasMetricsRef = useRef({ cssWidth: 1, cssHeight: 1, dpr: 1 });
 
@@ -384,7 +386,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          if (advancedForRoundRef.current !== currentRound) {
+          if ((isDrawer || isCreator) && advancedForRoundRef.current !== currentRound) {
             advancedForRoundRef.current = currentRound;
             playBuzzerSound();
             void forceNextRound(currentRound);
@@ -499,8 +501,21 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
     currentStrokeRef.current.push(point);
     pendingPoints.current.push(point);
+    broadcastBatchRef.current.push(point);
     playScribbleBurst();
     requestFlush();
+
+    // Send live broadcast every 5 points or every 80ms
+    const now = performance.now();
+    if (broadcastBatchRef.current.length >= 5 || now - lastBroadcastTime.current > 80) {
+      broadcastChannel.current?.send({
+        type: 'broadcast',
+        event: 'draw',
+        payload: { points: broadcastBatchRef.current, drawer_id: guestId, coord_space: 'normalized' },
+      });
+      broadcastBatchRef.current = [];
+      lastBroadcastTime.current = now;
+    }
   };
 
   const stopDrawing = (e?: React.PointerEvent) => {
@@ -516,16 +531,16 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       drawStroke(pendingPoints.current);
     }
 
-    const stroke = currentStrokeRef.current;
-    if (stroke.length > 0) {
+    // Flush remaining broadcast batch
+    if (broadcastBatchRef.current.length > 0) {
       broadcastChannel.current?.send({
         type: 'broadcast',
         event: 'draw',
-        payload: { points: stroke, drawer_id: guestId, coord_space: 'normalized' },
+        payload: { points: broadcastBatchRef.current, drawer_id: guestId, coord_space: 'normalized' },
       });
+      broadcastBatchRef.current = [];
     }
 
-    // no-op: scribble bursts are self-contained
     isDrawingRef.current = false;
     activePointerIdRef.current = null;
     currentStrokeRef.current = [];
@@ -572,36 +587,41 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     setTimeLeft(0);
 
     const currentRound = lobby.round_number || 0;
+    const iAmResponsible = isDrawer || isCreator;
 
-    // Force temporary result status for synchronized pause state
-    void supabase
-      .from('scribble_lobbies')
-      .update({ status: 'showing_result' })
-      .eq('id', lobbyId)
-      .eq('round_number', currentRound)
-      .eq('status', 'playing');
-
-    // After 3s: force next round regardless of timer state
-    if (roundAdvanceTimeoutRef.current) {
-      clearTimeout(roundAdvanceTimeoutRef.current);
+    // Force temporary result status for synchronized pause state (only one client writes)
+    if (iAmResponsible) {
+      void supabase
+        .from('scribble_lobbies')
+        .update({ status: 'showing_result' })
+        .eq('id', lobbyId)
+        .eq('round_number', currentRound)
+        .eq('status', 'playing');
     }
-    roundAdvanceTimeoutRef.current = setTimeout(async () => {
-      await forceNextRound(currentRound);
 
-      // Fallback: if still stuck in showing_result after 1s, retry
-      setTimeout(async () => {
-        const { data } = await supabase
-          .from('scribble_lobbies')
-          .select('status, round_number')
-          .eq('id', lobbyId)
-          .single();
-        if (data && data.status === 'showing_result' && data.round_number === currentRound) {
-          console.warn('[Scribble] Fallback: lobby stuck in showing_result, retrying forceNextRound');
-          await forceNextRound(currentRound);
-        }
-      }, 1000);
-    }, 3000);
-  }, [forceNextRound, guesses, lobby, lobbyId]);
+    // After 3s: force next round (only drawer/host triggers)
+    if (iAmResponsible) {
+      if (roundAdvanceTimeoutRef.current) {
+        clearTimeout(roundAdvanceTimeoutRef.current);
+      }
+      roundAdvanceTimeoutRef.current = setTimeout(async () => {
+        await forceNextRound(currentRound);
+
+        // Fallback: if still stuck in showing_result after 1s, retry
+        setTimeout(async () => {
+          const { data } = await supabase
+            .from('scribble_lobbies')
+            .select('status, round_number')
+            .eq('id', lobbyId)
+            .single();
+          if (data && data.status === 'showing_result' && data.round_number === currentRound) {
+            console.warn('[Scribble] Fallback: lobby stuck in showing_result, retrying forceNextRound');
+            await forceNextRound(currentRound);
+          }
+        }, 1000);
+      }, 3000);
+    }
+  }, [forceNextRound, guesses, lobby, lobbyId, isDrawer, isCreator]);
 
   // Reset round state when round changes
   useEffect(() => {
@@ -707,23 +727,66 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
         </div>
       )}
 
-      {/* Game finished */}
+      {/* Game finished — Podium */}
       {lobby?.status === "finished" && (() => {
         const sorted = [...players].sort((a, b) => b.score - a.score);
+        const podiumOrder = sorted.length >= 3
+          ? [sorted[1], sorted[0], sorted[2]]
+          : sorted.length === 2
+            ? [sorted[1], sorted[0]]
+            : [sorted[0]];
+        const podiumHeights = ['h-20', 'h-28', 'h-14'];
+        const podiumColors = ['bg-muted/60', 'bg-primary/20', 'bg-muted/40'];
+        const podiumLabels = ['🥈', '🥇', '🥉'];
+        const podiumPositions = sorted.length >= 3 ? [1, 0, 2] : sorted.length === 2 ? [1, 0] : [0];
+
         return (
           <div className="flex-1 flex items-center justify-center p-4">
-            <div className="retro-panel p-6 text-center space-y-4 max-w-sm w-full">
-              <Trophy className="w-12 h-12 mx-auto text-primary" />
-              <h2 className="font-pixel text-xs">Spelet är slut!</h2>
-              <div className="space-y-2">
-                {sorted.map((p, i) => (
-                  <div key={p.id} className="flex items-center justify-between text-sm">
-                    <span>{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`} {p.username}</span>
-                    <span className="font-mono font-bold text-primary">{p.score}p</span>
-                  </div>
-                ))}
+            <div className="retro-panel p-6 text-center space-y-6 max-w-md w-full animate-fade-in">
+              <div className="space-y-1">
+                <h2 className="font-pixel text-sm">🏆 Spelet är slut!</h2>
+                <p className="text-xs text-muted-foreground">Grattis till alla spelare!</p>
               </div>
-              <Button onClick={handleLeave}>Tillbaka till lobbys</Button>
+
+              {/* Podium visualization */}
+              <div className="flex items-end justify-center gap-2 pt-4">
+                {podiumOrder.map((player, visualIdx) => {
+                  if (!player) return null;
+                  const rank = podiumPositions[visualIdx];
+                  const height = podiumHeights[rank] || 'h-14';
+                  const bg = podiumColors[rank] || 'bg-muted/40';
+                  const medal = podiumLabels[rank] || `${rank + 1}.`;
+                  const isFirst = rank === 0;
+
+                  return (
+                    <div key={player.id} className="flex flex-col items-center gap-1" style={{ minWidth: isFirst ? 100 : 80 }}>
+                      {isFirst && <span className="text-2xl animate-pulse">👑</span>}
+                      <span className="text-lg">{medal}</span>
+                      <span className={`font-bold text-xs truncate max-w-[90px] ${isFirst ? 'text-primary' : 'text-foreground'}`}>
+                        {player.username}
+                      </span>
+                      <span className="font-mono text-[10px] text-muted-foreground">{player.score}p</span>
+                      <div className={`${height} w-full rounded-t-lg ${bg} border border-border/50 flex items-end justify-center pb-1 transition-all`}>
+                        <span className="font-pixel text-[10px] text-muted-foreground">{rank + 1}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Full scoreboard below podium */}
+              {sorted.length > 3 && (
+                <div className="space-y-1 pt-2 border-t border-border">
+                  {sorted.slice(3).map((p, i) => (
+                    <div key={p.id} className="flex items-center justify-between text-xs px-2">
+                      <span className="text-muted-foreground">{i + 4}. {p.username}</span>
+                      <span className="font-mono text-muted-foreground">{p.score}p</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button onClick={handleLeave} className="mt-2">Tillbaka till lobbys</Button>
             </div>
           </div>
         );
