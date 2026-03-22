@@ -503,15 +503,18 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     currentStrokeRef.current.push(point);
     pendingPoints.current.push(point);
     broadcastBatchRef.current.push(point);
+
     const now = performance.now();
+
+    // Throttle scribble sound to max once per 100ms
     if (now - lastSoundTimeRef.current > 100) {
       lastSoundTimeRef.current = now;
       playScribbleBurst();
     }
+
     requestFlush();
 
     // Send live broadcast every 5 points or every 80ms
-    const now = performance.now();
     if (broadcastBatchRef.current.length >= 5 || now - lastBroadcastTime.current > 80) {
       broadcastChannel.current?.send({
         type: 'broadcast',
