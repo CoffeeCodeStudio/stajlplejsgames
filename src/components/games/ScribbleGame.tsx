@@ -727,23 +727,66 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
         </div>
       )}
 
-      {/* Game finished */}
+      {/* Game finished — Podium */}
       {lobby?.status === "finished" && (() => {
         const sorted = [...players].sort((a, b) => b.score - a.score);
+        const podiumOrder = sorted.length >= 3
+          ? [sorted[1], sorted[0], sorted[2]]
+          : sorted.length === 2
+            ? [sorted[1], sorted[0]]
+            : [sorted[0]];
+        const podiumHeights = ['h-20', 'h-28', 'h-14'];
+        const podiumColors = ['bg-muted/60', 'bg-primary/20', 'bg-muted/40'];
+        const podiumLabels = ['🥈', '🥇', '🥉'];
+        const podiumPositions = sorted.length >= 3 ? [1, 0, 2] : sorted.length === 2 ? [1, 0] : [0];
+
         return (
           <div className="flex-1 flex items-center justify-center p-4">
-            <div className="retro-panel p-6 text-center space-y-4 max-w-sm w-full">
-              <Trophy className="w-12 h-12 mx-auto text-primary" />
-              <h2 className="font-pixel text-xs">Spelet är slut!</h2>
-              <div className="space-y-2">
-                {sorted.map((p, i) => (
-                  <div key={p.id} className="flex items-center justify-between text-sm">
-                    <span>{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`} {p.username}</span>
-                    <span className="font-mono font-bold text-primary">{p.score}p</span>
-                  </div>
-                ))}
+            <div className="retro-panel p-6 text-center space-y-6 max-w-md w-full animate-fade-in">
+              <div className="space-y-1">
+                <h2 className="font-pixel text-sm">🏆 Spelet är slut!</h2>
+                <p className="text-xs text-muted-foreground">Grattis till alla spelare!</p>
               </div>
-              <Button onClick={handleLeave}>Tillbaka till lobbys</Button>
+
+              {/* Podium visualization */}
+              <div className="flex items-end justify-center gap-2 pt-4">
+                {podiumOrder.map((player, visualIdx) => {
+                  if (!player) return null;
+                  const rank = podiumPositions[visualIdx];
+                  const height = podiumHeights[rank] || 'h-14';
+                  const bg = podiumColors[rank] || 'bg-muted/40';
+                  const medal = podiumLabels[rank] || `${rank + 1}.`;
+                  const isFirst = rank === 0;
+
+                  return (
+                    <div key={player.id} className="flex flex-col items-center gap-1" style={{ minWidth: isFirst ? 100 : 80 }}>
+                      {isFirst && <span className="text-2xl animate-pulse">👑</span>}
+                      <span className="text-lg">{medal}</span>
+                      <span className={`font-bold text-xs truncate max-w-[90px] ${isFirst ? 'text-primary' : 'text-foreground'}`}>
+                        {player.username}
+                      </span>
+                      <span className="font-mono text-[10px] text-muted-foreground">{player.score}p</span>
+                      <div className={`${height} w-full rounded-t-lg ${bg} border border-border/50 flex items-end justify-center pb-1 transition-all`}>
+                        <span className="font-pixel text-[10px] text-muted-foreground">{rank + 1}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Full scoreboard below podium */}
+              {sorted.length > 3 && (
+                <div className="space-y-1 pt-2 border-t border-border">
+                  {sorted.slice(3).map((p, i) => (
+                    <div key={p.id} className="flex items-center justify-between text-xs px-2">
+                      <span className="text-muted-foreground">{i + 4}. {p.username}</span>
+                      <span className="font-mono text-muted-foreground">{p.score}p</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button onClick={handleLeave} className="mt-2">Tillbaka till lobbys</Button>
             </div>
           </div>
         );
