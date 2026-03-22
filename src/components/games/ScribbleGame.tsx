@@ -249,18 +249,17 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
-    applyCanvasDefaults(ctx);
-    const { cssWidth, cssHeight } = canvasMetricsRef.current;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const { cssWidth, cssHeight, dpr } = canvasMetricsRef.current;
+    ctx.scale(dpr, dpr);
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, cssWidth, cssHeight);
-
+    ctx.fillRect(0, 0, cssWidth || canvas.width / (dpr || 1), cssHeight || canvas.height / (dpr || 1));
     currentStrokeRef.current = [];
     pendingPoints.current = [];
-  }, [applyCanvasDefaults]);
+  }, []);
 
   const getPos = useCallback((e: React.PointerEvent) => {
     const canvas = canvasRef.current;
