@@ -59,6 +59,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const roundEndedRef = useRef(false);
   const [roundEnding, setRoundEnding] = useState(false);
   const [roundWinner, setRoundWinner] = useState<{ username: string; word: string } | null>(null);
+  const [muted, setMutedState] = useState(isMuted());
+  const toggleMute = () => { const next = !muted; setMutedState(next); setMuted(next); };
 
   const isDrawingRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
