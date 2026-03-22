@@ -66,6 +66,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const activePointerIdRef = useRef<number | null>(null);
   const currentStrokeRef = useRef<DrawPoint[]>([]);
   const pendingPoints = useRef<DrawPoint[]>([]);
+  const broadcastBatchRef = useRef<DrawPoint[]>([]);
+  const lastBroadcastTime = useRef(0);
   const rafId = useRef<number>(0);
   const canvasMetricsRef = useRef({ cssWidth: 1, cssHeight: 1, dpr: 1 });
 
