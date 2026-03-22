@@ -210,5 +210,84 @@ export function playBuzzerSound() {
     osc2.stop(now + 0.5);
   } catch {
     // Audio not available
+}
+
+// ── Drawing SFX ──
+
+let drawNoiseNode: AudioBufferSourceNode | null = null;
+let drawGainNode: GainNode | null = null;
+
+/** Short pen-down click */
+export function playPenDownSound() {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(2000, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.03);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.05);
+  } catch {
+    // Audio not available
+  }
+}
+
+/** Start a looping scratch/scribble noise while drawing */
+export function startDrawNoise() {
+  try {
+    stopDrawNoise();
+    const ctx = getAudioCtx();
+
+    // Generate a short buffer of filtered noise (pencil scratch texture)
+    const sampleRate = ctx.sampleRate;
+    const length = sampleRate * 0.15; // 150ms loop
+    const buffer = ctx.createBuffer(1, length, sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.5;
+    }
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+
+    // Bandpass filter to sound like pencil-on-paper
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 3000;
+    filter.Q.value = 0.8;
+
+    const gain = ctx.createGain();
+    gain.gain.value = 0.07; // ~10-15% volume, very subtle
+
+    source.connect(filter).connect(gain).connect(ctx.destination);
+    source.start();
+
+    drawNoiseNode = source;
+    drawGainNode = gain;
+  } catch {
+    // Audio not available
+  }
+}
+
+/** Stop the drawing noise immediately */
+export function stopDrawNoise() {
+  try {
+    if (drawNoiseNode) {
+      drawNoiseNode.stop();
+      drawNoiseNode.disconnect();
+      drawNoiseNode = null;
+    }
+    if (drawGainNode) {
+      drawGainNode.disconnect();
+      drawGainNode = null;
+    }
+  } catch {
+    // Already stopped
   }
 }
