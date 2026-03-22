@@ -305,6 +305,73 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
   // Timer
   const advancedForRoundRef = useRef<number | null>(null);
+  const roundAdvanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const forceNextRound = useCallback(async (roundToAdvance: number) => {
+    const { data: lobbyState, error: lobbyError } = await supabase
+      .from('scribble_lobbies')
+      .select('round_number,current_drawer_id,status')
+      .eq('id', lobbyId)
+      .single();
+
+    if (lobbyError || !lobbyState) return;
+    if ((lobbyState.round_number ?? 0) !== roundToAdvance) return;
+    if (!['playing', 'showing_result'].includes(lobbyState.status)) return;
+
+    const { data: orderedPlayers, error: playersError } = await supabase
+      .from('scribble_players')
+      .select('user_id, username, joined_at')
+      .eq('lobby_id', lobbyId)
+      .order('joined_at', { ascending: true });
+
+    if (playersError || !orderedPlayers) return;
+
+    if (orderedPlayers.length === 0) {
+      await supabase.from('scribble_lobbies').update({
+        status: 'finished',
+        current_word: null,
+        current_drawer_id: null,
+      }).eq('id', lobbyId);
+      return;
+    }
+
+    const maxRoundsForLobby = orderedPlayers.length * 2;
+    const nextRound = roundToAdvance + 1;
+
+    if (nextRound > maxRoundsForLobby) {
+      await supabase.from('scribble_lobbies').update({
+        status: 'finished',
+        current_word: null,
+        current_drawer_id: null,
+      }).eq('id', lobbyId);
+      toast({ title: "🏆 Spelet är slut!" });
+      return;
+    }
+
+    const currentIdx = orderedPlayers.findIndex(p => p.user_id === lobbyState.current_drawer_id);
+    const nextIdx = currentIdx >= 0 ? (currentIdx + 1) % orderedPlayers.length : 0;
+    const nextDrawer = orderedPlayers[nextIdx];
+
+    if (nextDrawer.user_id === guestId && wordPickerRoundRef.current !== nextRound) {
+      wordPickerRoundRef.current = nextRound;
+      setWordChoices(getRandomWords(3));
+      setShowWordPicker(true);
+    }
+
+    console.log("Nu byter vi runda!");
+
+    await supabase.from('scribble_lobbies').update({
+      current_drawer_id: nextDrawer.user_id,
+      round_number: nextRound,
+      current_word: null,
+      status: 'playing',
+    })
+      .eq('id', lobbyId)
+      .eq('round_number', roundToAdvance)
+      .in('status', ['playing', 'showing_result']);
+
+    clearCanvas();
+  }, [clearCanvas, guestId, lobbyId, toast]);
 
   useEffect(() => {
     if (lobby?.status !== "playing") return;
@@ -315,17 +382,41 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          if (isDrawer && advancedForRoundRef.current !== currentRound) {
+          if (advancedForRoundRef.current !== currentRound) {
             advancedForRoundRef.current = currentRound;
-            advanceTurn();
+            void forceNextRound(currentRound);
           }
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [lobby?.round_number, lobby?.status, lobby?.current_drawer_id]); // eslint-disable-line
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [forceNextRound, lobby?.round_number, lobby?.status]);
+
+  useEffect(() => {
+    if (lobby?.status !== 'showing_result') return;
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setTimeLeft(0);
+  }, [lobby?.status]);
+
+  useEffect(() => {
+    return () => {
+      if (roundAdvanceTimeoutRef.current) {
+        clearTimeout(roundAdvanceTimeoutRef.current);
+        roundAdvanceTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Broadcast channel
   const broadcastChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -448,33 +539,46 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     setGuessText("");
   };
 
-  // Auto-advance turn when a correct guess is detected (drawer only, once per round)
+  // Auto-advance turn when a correct guess is detected (once per round)
   const lastAdvancedGuessRef = useRef<string | null>(null);
   useEffect(() => {
     if (!lobby || lobby.status !== 'playing') return;
+
     const correctGuess = guesses.filter(g => g.is_correct).pop();
     if (!correctGuess) return;
     if (lastAdvancedGuessRef.current === correctGuess.id) return;
     if (roundEndedRef.current) return;
-    
+
     roundEndedRef.current = true;
     lastAdvancedGuessRef.current = correctGuess.id;
     setRoundEnding(true);
     setRoundWinner({ username: correctGuess.username, word: lobby.current_word || '?' });
-    
-    // Kill the round timer immediately — don't wait for it to reach zero
+
+    // Kill the round timer immediately on correct guess
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
     setTimeLeft(0);
-    
-    // Auto-advance after 3 seconds — any player that is the drawer triggers it
-    if (isDrawer) {
-      const timer = setTimeout(() => advanceTurn(), 3000);
-      return () => clearTimeout(timer);
+
+    const currentRound = lobby.round_number || 0;
+
+    // Force temporary result status for synchronized pause state
+    void supabase
+      .from('scribble_lobbies')
+      .update({ status: 'showing_result' })
+      .eq('id', lobbyId)
+      .eq('round_number', currentRound)
+      .eq('status', 'playing');
+
+    // After 3s: force next round regardless of timer state
+    if (roundAdvanceTimeoutRef.current) {
+      clearTimeout(roundAdvanceTimeoutRef.current);
     }
-  }, [guesses, isDrawer, lobby?.status]); // eslint-disable-line
+    roundAdvanceTimeoutRef.current = setTimeout(() => {
+      void forceNextRound(currentRound);
+    }, 3000);
+  }, [forceNextRound, guesses, lobby, lobbyId]);
 
   // Reset round state when round changes
   useEffect(() => {
@@ -485,30 +589,13 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   }, [lobby?.round_number]);
 
   const advanceTurn = async () => {
-    if (!lobby || players.length === 0) return;
-    const nextRound = (lobby.round_number || 0) + 1;
-    if (nextRound > maxRounds) {
-      await supabase.from('scribble_lobbies').update({
-        status: 'finished', current_word: null, current_drawer_id: null,
-      }).eq('id', lobbyId);
-      toast({ title: "🏆 Spelet är slut!" });
-      return;
+    if (!lobby) return;
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-    const currentIdx = players.findIndex(p => p.user_id === lobby.current_drawer_id);
-    const nextIdx = (currentIdx + 1) % players.length;
-    const nextDrawer = players[nextIdx];
-    if (nextDrawer.user_id === guestId && wordPickerRoundRef.current !== nextRound) {
-      wordPickerRoundRef.current = nextRound;
-      setWordChoices(getRandomWords(3));
-      setShowWordPicker(true);
-    }
-    await supabase.from('scribble_lobbies').update({
-      current_drawer_id: nextDrawer.user_id,
-      round_number: nextRound,
-      current_word: null,
-      status: 'playing',
-    }).eq('id', lobbyId);
-    clearCanvas();
+    setTimeLeft(0);
+    await forceNextRound(lobby.round_number || 0);
   };
 
   const getRandomWords = (n: number) => {
