@@ -497,6 +497,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
     currentStrokeRef.current.push(point);
     pendingPoints.current.push(point);
+    playScribbleBurst();
     requestFlush();
   };
 
