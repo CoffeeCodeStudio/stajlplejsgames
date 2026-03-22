@@ -20,11 +20,23 @@ export function fireConfetti() {
   }, 300);
 }
 
+// ── Mute control ──
+
+let _muted = localStorage.getItem('game-sfx-muted') === 'true';
+
+export function isMuted(): boolean { return _muted; }
+
+export function setMuted(muted: boolean) {
+  _muted = muted;
+  localStorage.setItem('game-sfx-muted', String(muted));
+}
+
 // ── Retro synth sounds via Web Audio API ──
 
 let audioCtx: AudioContext | null = null;
 
 function getAudioCtx(): AudioContext {
+  if (_muted) throw new Error('muted');
   if (!audioCtx) audioCtx = new AudioContext();
   return audioCtx;
 }

@@ -7,7 +7,7 @@ import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward,
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { playCorrectSound, fireConfetti, playTickSound, playBuzzerSound, playPenDownSound, playScribbleBurst } from "@/lib/game-effects";
+import { playCorrectSound, fireConfetti, playTickSound, playBuzzerSound, playPenDownSound, playScribbleBurst, isMuted, setMuted } from "@/lib/game-effects";
 
 interface DrawPoint {
   x: number;
