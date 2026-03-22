@@ -457,7 +457,6 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     activePointerIdRef.current = e.pointerId;
     isDrawingRef.current = true;
     playPenDownSound();
-    startDrawNoise();
 
     const pos = getPos(e);
 
