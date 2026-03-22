@@ -501,8 +501,21 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
 
     currentStrokeRef.current.push(point);
     pendingPoints.current.push(point);
+    broadcastBatchRef.current.push(point);
     playScribbleBurst();
     requestFlush();
+
+    // Send live broadcast every 5 points or every 80ms
+    const now = performance.now();
+    if (broadcastBatchRef.current.length >= 5 || now - lastBroadcastTime.current > 80) {
+      broadcastChannel.current?.send({
+        type: 'broadcast',
+        event: 'draw',
+        payload: { points: broadcastBatchRef.current, drawer_id: guestId, coord_space: 'normalized' },
+      });
+      broadcastBatchRef.current = [];
+      lastBroadcastTime.current = now;
+    }
   };
 
   const stopDrawing = (e?: React.PointerEvent) => {
@@ -518,16 +531,16 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
       drawStroke(pendingPoints.current);
     }
 
-    const stroke = currentStrokeRef.current;
-    if (stroke.length > 0) {
+    // Flush remaining broadcast batch
+    if (broadcastBatchRef.current.length > 0) {
       broadcastChannel.current?.send({
         type: 'broadcast',
         event: 'draw',
-        payload: { points: stroke, drawer_id: guestId, coord_space: 'normalized' },
+        payload: { points: broadcastBatchRef.current, drawer_id: guestId, coord_space: 'normalized' },
       });
+      broadcastBatchRef.current = [];
     }
 
-    // no-op: scribble bursts are self-contained
     isDrawingRef.current = false;
     activePointerIdRef.current = null;
     currentStrokeRef.current = [];
