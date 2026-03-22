@@ -7,7 +7,7 @@ import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { playCorrectSound, fireConfetti } from "@/lib/game-effects";
+import { playCorrectSound, fireConfetti, playTickSound, playBuzzerSound } from "@/lib/game-effects";
 
 interface DrawPoint {
   x: number;
@@ -384,11 +384,16 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
         if (prev <= 1) {
           if (advancedForRoundRef.current !== currentRound) {
             advancedForRoundRef.current = currentRound;
+            playBuzzerSound();
             void forceNextRound(currentRound);
           }
           return 0;
         }
-        return prev - 1;
+        const next = prev - 1;
+        if (next > 0 && next <= 10) {
+          playTickSound();
+        }
+        return next;
       });
     }, 1000);
 
@@ -644,6 +649,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   };
 
   const timerColor = timeLeft <= 10 ? "text-red-400" : timeLeft <= 20 ? "text-orange-400" : "text-white/80";
+  const timerPanic = timeLeft > 0 && timeLeft <= 10;
 
   // === RENDER ===
   return (
@@ -658,7 +664,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
         </div>
         <div className="flex items-center gap-2 text-primary-foreground/80 text-xs shrink-0">
           {lobby?.status === "playing" && (
-            <span className={`flex items-center gap-1 font-mono font-bold ${timerColor}`}>
+            <span className={`flex items-center gap-1 font-mono font-bold ${timerColor} ${timerPanic ? "animate-pulse scale-110" : ""}`}
+              style={timerPanic ? { animationDuration: "0.5s" } : undefined}
+            >
               <Timer className="w-3 h-3" />
               {timeLeft}s
             </span>
