@@ -3,11 +3,11 @@ import { useScribbleGame } from "@/hooks/useScribble";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward } from "lucide-react";
+import { ArrowLeft, Send, Eraser, Paintbrush, Users, Trophy, Timer, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { playCorrectSound, fireConfetti, playTickSound, playBuzzerSound, playPenDownSound, playScribbleBurst } from "@/lib/game-effects";
+import { playCorrectSound, fireConfetti, playTickSound, playBuzzerSound, playPenDownSound, playScribbleBurst, isMuted, setMuted } from "@/lib/game-effects";
 
 interface DrawPoint {
   x: number;
@@ -59,6 +59,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const roundEndedRef = useRef(false);
   const [roundEnding, setRoundEnding] = useState(false);
   const [roundWinner, setRoundWinner] = useState<{ username: string; word: string } | null>(null);
+  const [muted, setMutedState] = useState(isMuted());
+  const toggleMute = () => { const next = !muted; setMutedState(next); setMuted(next); };
 
   const isDrawingRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
@@ -683,6 +685,9 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
               {lobby.round_number}/{maxRounds}
             </span>
           )}
+          <Button variant="ghost" size="icon" onClick={toggleMute} className="h-6 w-6 text-primary-foreground hover:bg-primary-foreground/20 shrink-0" title={muted ? "Slå på ljud" : "Stäng av ljud"}>
+            {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+          </Button>
         </div>
       </div>
 
