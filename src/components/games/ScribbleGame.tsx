@@ -68,6 +68,7 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const pendingPoints = useRef<DrawPoint[]>([]);
   const broadcastBatchRef = useRef<DrawPoint[]>([]);
   const lastBroadcastTime = useRef(0);
+  const lastSoundTimeRef = useRef(0);
   const rafId = useRef<number>(0);
   const canvasMetricsRef = useRef({ cssWidth: 1, cssHeight: 1, dpr: 1 });
 
@@ -502,11 +503,18 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     currentStrokeRef.current.push(point);
     pendingPoints.current.push(point);
     broadcastBatchRef.current.push(point);
-    playScribbleBurst();
+
+    const now = performance.now();
+
+    // Throttle scribble sound to max once per 100ms
+    if (now - lastSoundTimeRef.current > 100) {
+      lastSoundTimeRef.current = now;
+      playScribbleBurst();
+    }
+
     requestFlush();
 
     // Send live broadcast every 5 points or every 80ms
-    const now = performance.now();
     if (broadcastBatchRef.current.length >= 5 || now - lastBroadcastTime.current > 80) {
       broadcastChannel.current?.send({
         type: 'broadcast',
@@ -669,6 +677,12 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   };
 
   const handleLeave = async () => {
+    // Clean up drawing state and timers before leaving
+    isDrawingRef.current = false;
+    activePointerIdRef.current = null;
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (roundAdvanceTimeoutRef.current) { clearTimeout(roundAdvanceTimeoutRef.current); roundAdvanceTimeoutRef.current = null; }
+    if (rafId.current) { cancelAnimationFrame(rafId.current); rafId.current = 0; }
     await leaveLobby();
     onLeave();
   };
