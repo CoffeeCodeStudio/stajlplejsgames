@@ -19,7 +19,7 @@ En spelmodul byggd för StajlPlejs — ett svenskt nostalgicommunity med 40 000 
 
 ## Teknik
 - Byggd med Lovable AI
-- Hostad via Lovable
+- Hostad via Vercel
 - Ingen förändring i StajlPlejs databas eller kod krävs
   
 ## Screenshot
