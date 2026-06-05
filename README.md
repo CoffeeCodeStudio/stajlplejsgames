@@ -14,7 +14,7 @@ En spelmodul byggd för StajlPlejs — ett svenskt nostalgicommunity med 40 000 
 
 ## Integration
 ```html
-<iframe src="https://stajlplejsgames.lovable.app?usr=Användarnamn" width="100%" height="800" frameborder="0" scrolling="yes"></iframe>
+<iframe src="https://stajlplejsgames.vercel.app?usr=Användarnamn)?usr=Användarnamn" width="100%" height="800" frameborder="0" scrolling="yes"></iframe>
 ```
 
 ## Teknik
