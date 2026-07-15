@@ -3,6 +3,33 @@
 -- Kör detta i Supabase SQL Editor
 -- =============================================
 
+-- Snake Sessions (server-side score validation)
+CREATE TABLE public.snake_sessions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_token text NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(32), 'hex'),
+  username text NOT NULL,
+  started_at timestamptz NOT NULL DEFAULT now(),
+  finished_at timestamptz,
+  is_valid boolean NOT NULL DEFAULT true,
+  score integer,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_snake_sessions_token ON public.snake_sessions(session_token);
+ALTER TABLE public.snake_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can manage snake sessions" ON public.snake_sessions FOR ALL TO anon USING (true) WITH CHECK (true);
+
+-- Snake Events
+CREATE TABLE public.snake_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id uuid NOT NULL REFERENCES public.snake_sessions(id) ON DELETE CASCADE,
+  event_type text NOT NULL,
+  event_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_snake_events_session ON public.snake_events(session_id);
+ALTER TABLE public.snake_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can manage snake events" ON public.snake_events FOR ALL TO anon USING (true) WITH CHECK (true);
+
 -- Snake Highscores
 CREATE TABLE public.snake_highscores (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
