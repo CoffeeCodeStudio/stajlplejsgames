@@ -1,8 +1,21 @@
 import { usePlayer } from "@/hooks/usePlayer";
+import { useEmbedGuard } from "@/hooks/useEmbedGuard";
 import { GamesSection } from "@/components/games/GamesSection";
 
 export default function GamesPage() {
   const { username } = usePlayer();
+  const { isEmbedded } = useEmbedGuard();
+
+  if (!isEmbedded) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center max-w-[500px] mx-auto text-center px-6 gap-3">
+        <h1 className="font-pixel text-sm text-primary">GAME ZONE</h1>
+        <p className="text-sm text-muted-foreground">
+          Det här spelet är bara tillgängligt via StajlPlejs.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col max-w-[500px] mx-auto">
