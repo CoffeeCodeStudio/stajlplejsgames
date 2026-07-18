@@ -1,3 +1,5 @@
+// Vitest global setup: adds jest-dom matchers and polyfills matchMedia,
+// which jsdom doesn't implement but useIsMobile() calls.
 import "@testing-library/jest-dom";
 
 Object.defineProperty(window, "matchMedia", {

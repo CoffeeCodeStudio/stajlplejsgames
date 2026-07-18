@@ -1,3 +1,10 @@
+// Data layer for the Scribble multiplayer game: lobby list/creation
+// (useScribbleLobbies) and in-game state (useScribbleGame) — players,
+// guesses, drawer turns — synced live via Supabase Realtime. There's no
+// server-side game loop; every client independently runs the same
+// heartbeat/cleanup/turn-advance logic against shared rows, so whichever
+// client's timer fires first wins the race (writes are idempotent enough
+// that duplicate runs are harmless).
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';

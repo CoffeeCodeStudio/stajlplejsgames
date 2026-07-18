@@ -1,3 +1,11 @@
+// Server-authoritative scoring for Snake, mirroring memory-game/index.ts:
+// runs with service_role (bypasses RLS) and is the only path that can
+// write to snake_highscores, since the anon policies on
+// snake_highscores/snake_sessions/snake_events are locked to service_role
+// only (see supabase/migrations/002_lock_down_snake_rls.sql). The client
+// logs each apple pickup as an "apple" event during play; on "finish" this
+// function recomputes the score from that event log itself and checks the
+// timing between events was physically possible before saving.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

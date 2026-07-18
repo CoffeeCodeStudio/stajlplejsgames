@@ -1,3 +1,7 @@
+// App root: wraps the single game page in the providers it needs
+// (react-query cache, tooltip context, two toast systems) and a router.
+// There's only one real route — everything, including unknown paths,
+// renders GamesPage, since this app is always loaded as an iframe body.
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";

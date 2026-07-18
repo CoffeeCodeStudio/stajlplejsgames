@@ -1,3 +1,15 @@
+// Multiplayer draw-and-guess game. There's no game server — every client
+// independently runs the same round-transition logic against shared rows
+// in scribble_lobbies (see useScribble.ts), guarded by conditional
+// `.eq('round_number', ...).eq('status', ...)` updates so that if two
+// clients race to advance the round, only the first write actually
+// matches and takes effect; the second is a silent no-op.
+//
+// Drawing works the same way: strokes are drawn locally immediately, then
+// broadcast to other clients as batches of normalized (0..1) points over a
+// Supabase Realtime broadcast channel (not a DB table — this is
+// fire-and-forget, not persisted), so drawings scale correctly across
+// viewers with different canvas/window sizes.
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useScribbleGame } from "@/hooks/useScribble";
 import { Button } from "@/components/ui/button";
@@ -291,6 +303,10 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     };
   }, []);
 
+  // Coalesces pointermove events into at most one canvas redraw per
+  // animation frame — pointermove can fire much faster than the display
+  // refreshes, so drawing on every event wastes work without being visibly
+  // smoother.
   const flushDraw = useCallback(() => {
     if (pendingPoints.current.length <= 1) {
       pendingPoints.current = pendingPoints.current.slice(-1);
@@ -312,6 +328,12 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
   const advancedForRoundRef = useRef<number | null>(null);
   const roundAdvanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Advances the lobby to the next round (or finishes the game). Re-reads
+  // the lobby/players fresh from the DB rather than trusting local state,
+  // and every write below is conditioned on the round/status still being
+  // what was just read — this is the guard that makes it safe for both the
+  // drawer and the host to independently call this on timeout/skip without
+  // double-advancing the round.
   const forceNextRound = useCallback(async (roundToAdvance: number) => {
     const { data: lobbyState, error: lobbyError } = await supabase
       .from('scribble_lobbies')
@@ -595,6 +617,8 @@ export function ScribbleGame({ lobbyId, onLeave, guestId, guestUsername }: Scrib
     setTimeLeft(0);
 
     const currentRound = lobby.round_number || 0;
+    // Only the drawer or host drives the round-advance timers below —
+    // every other client just watches the resulting lobby row update.
     const iAmResponsible = isDrawer || isCreator;
 
     // Force temporary result status for synchronized pause state (only one client writes)

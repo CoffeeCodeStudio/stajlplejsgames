@@ -1,3 +1,6 @@
+// Standard shadcn/ui toast store: a module-level reducer + listener list
+// acts as a tiny global store so any component calling toast() can push
+// into the same queue that <Toaster /> renders from, without React context.
 import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";

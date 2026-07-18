@@ -1,3 +1,7 @@
+// Scribble's landing screen: lists open/in-progress lobbies (live via
+// useScribbleLobbies' Realtime subscription) and a dialog for creating a
+// new one. All actual game state lives in useScribble.ts — this component
+// is presentation only.
 import { useState } from "react";
 import { useScribbleLobbies } from "@/hooks/useScribble";
 import { Button } from "@/components/ui/button";

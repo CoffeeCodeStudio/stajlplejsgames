@@ -1,3 +1,9 @@
+// Shared visual/audio feedback for all three games: confetti bursts and a
+// small library of procedurally synthesized retro sound effects (Web Audio
+// oscillators — no audio files). AudioContext is created lazily and reused;
+// getAudioCtx() also resumes it, since browsers start it suspended until a
+// user gesture and it can otherwise silently stay suspended through the
+// first sound of a game loop that started without a direct click.
 import confetti from "canvas-confetti";
 
 // ── Confetti ──

@@ -1,3 +1,10 @@
+// Snake game: canvas rendering + a setInterval-based tick loop drive
+// gameplay entirely client-side (for responsiveness), but the score isn't
+// trusted from the client. Every apple pickup is reported to the
+// snake-game edge function as an event; on game over the server replays
+// those events, checks the timing between them was physically possible,
+// and only then writes to snake_highscores. See callSnakeApi() below and
+// supabase/functions/snake-game/index.ts.
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fireConfetti, playVictorySound, playGameOverSound, playPickupSound } from "@/lib/game-effects";
@@ -94,9 +101,10 @@ export function SnakeGame({ onBack, username }: Props) {
       .limit(100);
     const seen = new Set<string>();
     const unique = ((data as HighscoreEntry[]) || []).filter(e => {
-      if (INVALID_USERNAMES.has(e.username.toLowerCase())) return false;
-      if (seen.has(e.username)) return false;
-      seen.add(e.username);
+      const key = e.username.toLowerCase();
+      if (INVALID_USERNAMES.has(key)) return false;
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     }).slice(0, 10);
     setLeaderboard(unique);
@@ -113,9 +121,11 @@ export function SnakeGame({ onBack, username }: Props) {
     }
 
     if (!username || BLOCKED_NAMES.includes(username.toLowerCase())) return;
-    if (!sessionTokenRef.current) return;
+    if (!sessionTokenRef.current) return; // no session was created (e.g. no valid username at game start)
 
     try {
+      // Server recomputes the score from the logged apple events and
+      // validates their timing before deciding whether to save it.
       const result = await callSnakeApi({ action: "finish", session_token: sessionTokenRef.current });
       if (result.valid) {
         toast({ title: "🏆 Ditt rekord har sparats!" });
@@ -282,6 +292,9 @@ export function SnakeGame({ onBack, username }: Props) {
       setApplesEaten(applesRef.current);
       playPickupSound();
       appleRef.current = getRandomPosition(newSnake);
+      // Report the pickup to the server so it can validate the timing later;
+      // fire-and-forget, since a dropped event just means a slightly lower
+      // final score, not a broken game.
       if (sessionTokenRef.current) {
         callSnakeApi({ action: "apple", session_token: sessionTokenRef.current }).catch(() => {});
       }
@@ -315,6 +328,8 @@ export function SnakeGame({ onBack, username }: Props) {
     setScoreSaved(false);
     setGameState("playing");
 
+    // Only real (non-guest) usernames get a server session, since a
+    // session is what makes the score eligible to be saved at all.
     if (username && !BLOCKED_NAMES.includes(username.toLowerCase())) {
       callSnakeApi({ action: "start", username }).then(res => {
         if (res.session_token) sessionTokenRef.current = res.session_token;

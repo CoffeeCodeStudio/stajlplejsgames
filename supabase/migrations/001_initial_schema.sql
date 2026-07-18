@@ -2,6 +2,15 @@
 -- StajlPlejs Games — Clean Schema
 -- Kör detta i Supabase SQL Editor
 -- =============================================
+--
+-- NOTE: this is a squashed snapshot of the original ~53 incremental
+-- migrations, applied wholesale to a fresh Supabase project after the
+-- previous project got banned. The squash reintroduced open `TO anon`
+-- write policies on the snake_*/memory_* anti-cheat tables and highscore
+-- tables below — those are intentionally locked back down to
+-- service_role-only by 002_lock_down_snake_rls.sql, which must run after
+-- this file. Don't "fix" the policies here; fix them there, so the intent
+-- (what changed and why) stays visible in migration history.
 
 -- Snake Sessions (server-side score validation)
 CREATE TABLE public.snake_sessions (

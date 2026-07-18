@@ -1,3 +1,9 @@
+// Memory (card-matching) game. Gameplay/rendering is entirely local state;
+// scores are server-authoritative: the client only reports card-flip
+// events to the memory-game edge function as they happen, and the server
+// recomputes moves/time/score from that event log and validates it wasn't
+// played too fast before writing to memory_highscores. This prevents a
+// player from just POSTing an inflated score directly.
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -180,9 +186,10 @@ export function MemoryGame({ onBack, username }: Props) {
       .limit(100);
     const seen = new Set<string>();
     const unique = ((data as HighscoreEntry[]) || []).filter(e => {
-      if (INVALID_USERNAMES.has(e.username.toLowerCase())) return false;
-      if (seen.has(e.username)) return false;
-      seen.add(e.username);
+      const key = e.username.toLowerCase();
+      if (INVALID_USERNAMES.has(key)) return false;
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     }).slice(0, 10);
     setLeaderboard(unique);

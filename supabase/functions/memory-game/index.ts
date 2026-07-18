@@ -1,3 +1,10 @@
+// Server-authoritative scoring for the Memory game. Runs with the
+// service_role key (bypasses RLS) — this is intentional, since
+// memory_sessions/memory_events/memory_highscores are locked to
+// service_role-only writes (see supabase/migrations), so this function is
+// the *only* path that can write a score. The client can only call start
+// (open a session), event (log a card flip), and finish (ask the server
+// to validate the logged events and, if they check out, write the score).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

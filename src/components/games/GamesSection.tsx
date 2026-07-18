@@ -1,3 +1,6 @@
+// Top-level game picker + simple view router. Not React Router — just a
+// local `view` state machine, since the whole app has one URL and the
+// "screens" are really just which game component is mounted.
 import { useState } from "react";
 import { ScribbleLobbyList } from "./ScribbleLobbyList";
 import { ScribbleGame } from "./ScribbleGame";
