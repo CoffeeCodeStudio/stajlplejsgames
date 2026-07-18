@@ -1,1 +1,0 @@
-DELETE FROM memory_highscores WHERE LOWER(username) IN ('gäst', 'anonym', 'guest', 'anonymous', 'användarnamn', 'anvndarnamn', 'namn', 'test', 'user');

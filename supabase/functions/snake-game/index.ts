@@ -6,9 +6,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MIN_MS_BETWEEN_APPLES = 200;
+const MIN_MS_BETWEEN_APPLES = 200; // minimum ms between apple pickups (game min tick is 60ms but snake must travel)
 const MIN_GAME_DURATION_MS = 2000;
+const MAX_SCORE_PER_APPLE = 50; // sanity cap — no apple can give more than this
 
+// Must match SnakeGame.tsx exactly
 function calcScore(appleEvents: number[]): number {
   let score = 0;
   for (let i = 0; i < appleEvents.length; i++) {
@@ -35,47 +37,67 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
+    // ── START ──
     if (action === "start") {
       const { username } = body;
+
       if (!username || typeof username !== "string" || username.trim().length === 0) {
         return jsonError("Missing or invalid username", 400);
       }
+
       const sanitized = username.trim().slice(0, 30).replace(/[^a-zA-Z0-9_åäöÅÄÖ -]/g, "");
       if (!sanitized || BLOCKED_NAMES.has(sanitized.toLowerCase())) {
         return jsonError("Invalid username", 400);
       }
+
       const { data, error } = await supabase
         .from("snake_sessions")
         .insert({ username: sanitized })
         .select("id, session_token")
         .single();
-      if (error) return jsonError("Failed to create session", 500);
+
+      if (error) {
+        console.error("Start session error:", error);
+        return jsonError("Failed to create session", 500);
+      }
+
       return jsonOk({ session_token: data.session_token });
     }
 
+    // ── APPLE: log an apple pickup ──
     if (action === "apple") {
       const { session_token } = body;
       if (!session_token) return jsonError("Missing session_token", 400);
+
       const { data: session, error } = await supabase
         .from("snake_sessions")
         .select("id, is_valid, finished_at")
         .eq("session_token", session_token)
         .single();
+
       if (error || !session) return jsonError("Invalid session", 401);
       if (!session.is_valid) return jsonError("Session invalidated", 403);
       if (session.finished_at) return jsonError("Session already finished", 400);
-      await supabase.from("snake_events").insert({ session_id: session.id, event_type: "apple" });
+
+      await supabase.from("snake_events").insert({
+        session_id: session.id,
+        event_type: "apple",
+      });
+
       return jsonOk({ ok: true });
     }
 
+    // ── FINISH ──
     if (action === "finish") {
       const { session_token } = body;
       if (!session_token) return jsonError("Missing session_token", 400);
+
       const { data: session, error: sessError } = await supabase
         .from("snake_sessions")
         .select("*")
         .eq("session_token", session_token)
         .single();
+
       if (sessError || !session) return jsonError("Invalid session", 401);
       if (!session.is_valid) return jsonError("Session invalidated", 403);
       if (session.finished_at) return jsonError("Session already finished", 400);
@@ -87,22 +109,32 @@ Deno.serve(async (req) => {
         .order("event_at", { ascending: true });
 
       const appleEvents = (events || []).filter((e: any) => e.event_type === "apple");
+
       let invalidReason: string | null = null;
 
+      // 1. Min time between apples
       if (appleEvents.length > 1) {
         for (let i = 1; i < appleEvents.length; i++) {
           const diff = new Date(appleEvents[i].event_at).getTime() - new Date(appleEvents[i - 1].event_at).getTime();
           if (diff < MIN_MS_BETWEEN_APPLES) {
-            invalidReason = `Apples too fast: ${diff}ms`;
+            invalidReason = `Apples too fast: ${diff}ms between apple ${i - 1} and ${i}`;
             break;
           }
         }
       }
+
+      // 2. Min game duration
       if (!invalidReason && appleEvents.length > 0) {
         const duration = new Date(appleEvents[appleEvents.length - 1].event_at).getTime() - new Date(session.started_at).getTime();
-        if (duration < MIN_GAME_DURATION_MS) invalidReason = `Game too fast: ${duration}ms`;
+        if (duration < MIN_GAME_DURATION_MS) {
+          invalidReason = `Game too fast: ${duration}ms`;
+        }
       }
-      if (!invalidReason && appleEvents.length > 380) invalidReason = `Unrealistic apple count: ${appleEvents.length}`;
+
+      // 3. Sanity cap on apples (20x20 grid, snake can't eat more than ~380 apples)
+      if (!invalidReason && appleEvents.length > 380) {
+        invalidReason = `Unrealistic apple count: ${appleEvents.length}`;
+      }
 
       const score = calcScore(appleEvents);
       const timeSec = appleEvents.length > 0
@@ -120,6 +152,7 @@ Deno.serve(async (req) => {
         return jsonOk({ valid: false, score: 0 });
       }
 
+      // Check if better score already exists
       const { data: existing } = await supabase
         .from("snake_highscores")
         .select("id, score")

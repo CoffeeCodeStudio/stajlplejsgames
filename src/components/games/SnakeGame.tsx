@@ -39,7 +39,11 @@ function getRandomPosition(snake: Position[]): Position {
   return pos;
 }
 
-// ── Edge function helper ──
+interface Props {
+  onBack: () => void;
+  username: string | null;
+}
+
 async function callSnakeApi(body: Record<string, unknown>) {
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -47,19 +51,11 @@ async function callSnakeApi(body: Record<string, unknown>) {
     `https://${projectId}.supabase.co/functions/v1/snake-game`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: anonKey,
-      },
+      headers: { "Content-Type": "application/json", apikey: anonKey },
       body: JSON.stringify(body),
     }
   );
   return res.json();
-}
-
-interface Props {
-  onBack: () => void;
-  username: string | null;
 }
 
 export function SnakeGame({ onBack, username }: Props) {
@@ -75,6 +71,7 @@ export function SnakeGame({ onBack, username }: Props) {
   const applesRef = useRef(0);
   const speedRef = useRef(INITIAL_SPEED);
   const secondsRef = useRef(0);
+  const sessionTokenRef = useRef<string | null>(null);
 
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover" | "leaderboard">("menu");
   const [score, setScore] = useState(0);
@@ -85,10 +82,9 @@ export function SnakeGame({ onBack, username }: Props) {
   });
   const [leaderboard, setLeaderboard] = useState<HighscoreEntry[]>([]);
   const [scoreSaved, setScoreSaved] = useState(false);
-  const sessionTokenRef = useRef<string | null>(null);
 
   const INVALID_USERNAMES = new Set(["firefox", "chrome", "safari", "edge", "opera", "brave", "vivaldi", "chromium"]);
-  const BLOCKED_NAMES = new Set(['gäst', 'anonym', 'guest', 'anonymous', 'användarnamn', 'anvndarnamn', 'namn', 'test', 'user']);
+  const BLOCKED_NAMES = ['gäst', 'anonym', 'guest', 'anonymous', 'användarnamn', 'anvndarnamn', 'namn', 'test', 'user'];
 
   const fetchLeaderboard = useCallback(async () => {
     const { data } = await supabase
@@ -110,24 +106,24 @@ export function SnakeGame({ onBack, username }: Props) {
     if (scoreSaved) return;
     setScoreSaved(true);
 
-    // Always save to localStorage
     const localKey = 'snake-best';
     const localBest = parseInt(localStorage.getItem(localKey) || '0');
     if (finalScore > localBest) {
       localStorage.setItem(localKey, String(finalScore));
     }
 
-    // Server validates the recorded events and saves the score itself
+    if (!username || BLOCKED_NAMES.includes(username.toLowerCase())) return;
     if (!sessionTokenRef.current) return;
+
     try {
-      const res = await callSnakeApi({ action: "finish", session_token: sessionTokenRef.current });
-      if (res.valid) {
+      const result = await callSnakeApi({ action: "finish", session_token: sessionTokenRef.current });
+      if (result.valid) {
         toast({ title: "🏆 Ditt rekord har sparats!" });
       }
     } catch (e) {
-      console.warn("Failed to finish snake session:", e);
+      console.warn("Failed to save score:", e);
     }
-  }, [scoreSaved, toast]);
+  }, [username, scoreSaved]);
 
   const drawGame = useCallback(() => {
     const canvas = canvasRef.current;
@@ -237,6 +233,7 @@ export function SnakeGame({ onBack, username }: Props) {
 
     const finalScore = scoreRef.current;
     const apples = applesRef.current;
+    const timePlayed = secondsRef.current;
 
     setScore(finalScore);
     setApplesEaten(apples);
@@ -285,10 +282,8 @@ export function SnakeGame({ onBack, username }: Props) {
       setApplesEaten(applesRef.current);
       playPickupSound();
       appleRef.current = getRandomPosition(newSnake);
-
       if (sessionTokenRef.current) {
-        callSnakeApi({ action: "apple", session_token: sessionTokenRef.current })
-          .catch(e => console.warn("Failed to send snake event:", e));
+        callSnakeApi({ action: "apple", session_token: sessionTokenRef.current }).catch(() => {});
       }
 
       speedRef.current = Math.max(MIN_SPEED, speedRef.current - SPEED_INCREASE);
@@ -312,18 +307,18 @@ export function SnakeGame({ onBack, username }: Props) {
     scoreRef.current = 0;
     applesRef.current = 0;
     speedRef.current = INITIAL_SPEED;
+    sessionTokenRef.current = null;
 
     setScore(0);
     setApplesEaten(0);
     setSeconds(0);
     setScoreSaved(false);
     setGameState("playing");
-    sessionTokenRef.current = null;
 
-    if (username && !BLOCKED_NAMES.has(username.toLowerCase())) {
-      callSnakeApi({ action: "start", username })
-        .then(res => { if (res.session_token) sessionTokenRef.current = res.session_token; })
-        .catch(e => console.warn("Failed to create snake session:", e));
+    if (username && !BLOCKED_NAMES.includes(username.toLowerCase())) {
+      callSnakeApi({ action: "start", username }).then(res => {
+        if (res.session_token) sessionTokenRef.current = res.session_token;
+      }).catch(() => {});
     }
 
     setTimeout(() => {
@@ -331,7 +326,7 @@ export function SnakeGame({ onBack, username }: Props) {
       if (gameLoopRef.current) clearInterval(gameLoopRef.current);
       gameLoopRef.current = setInterval(() => tick(), INITIAL_SPEED);
     }, 50);
-  }, [drawGame, tick, username]);
+  }, [drawGame, tick]);
 
   useEffect(() => {
     if (gameState === "playing") {
