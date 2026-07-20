@@ -256,6 +256,163 @@ body {
       transparent 100%);
     margin: 8px 0;
   }
+
+  /* GamesSection front page — exact mockup colors (not part of the
+     Tailwind/HSL theme tokens above, so they're hard-coded here rather
+     than derived from CSS variables). */
+  .gs-wrapper {
+    background: #3a7a9c;
+    padding: 12px;
+  }
+
+  .gs-inner {
+    background: #1e3a4a;
+    border: 1px solid #2a5a7a;
+  }
+
+  .gs-tabs {
+    display: flex;
+    background: #152838;
+    border-bottom: 2px solid #e85a0a;
+  }
+
+  .gs-tab {
+    padding: 5px 10px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #5a8aaa;
+  }
+
+  .gs-tab.active {
+    background: #e85a0a;
+    color: #fff;
+  }
+
+  .gs-card {
+    background: #152838;
+    border: 1px solid #2a4a5a;
+  }
+
+  .gs-card-header {
+    background: #e85a0a;
+    color: #fff;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  .gs-play-btn {
+    display: block;
+    width: 100%;
+    background: #e85a0a;
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    border: none;
+    padding: 6px 8px;
+    cursor: pointer;
+  }
+
+  .gs-play-btn:hover {
+    filter: brightness(1.12);
+  }
+
+  .gs-lobby {
+    background: #152838;
+    border: 1px solid #2a6a3a;
+  }
+
+  .gs-join-btn {
+    display: block;
+    width: 100%;
+    background: #1a4a2a;
+    color: #30cc50;
+    border: 1px solid #2a7a3a;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 6px 8px;
+    cursor: pointer;
+  }
+
+  .gs-join-btn:hover {
+    filter: brightness(1.15);
+  }
+
+  .gs-feed-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1a3040;
+  }
+
+  .gs-username {
+    color: #ff8040;
+    white-space: nowrap;
+  }
+
+  .gs-time {
+    color: #3a5a6a;
+    margin-left: auto;
+  }
+
+  .gs-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    white-space: nowrap;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  .gs-badge-gold {
+    background: #3a2000;
+    color: #f0a000;
+    border: 1px solid #5a3000;
+  }
+
+  .gs-badge-silver {
+    background: #2a2a32;
+    color: #b0b8c0;
+    border: 1px solid #4a4a55;
+  }
+
+  .gs-badge-bronze {
+    background: #3a1f10;
+    color: #c8783c;
+    border: 1px solid #5a3a20;
+  }
+
+  .gs-badge-near {
+    background: #1a1a40;
+    color: #6060e0;
+    border: 1px solid #2a2a60;
+  }
+
+  .gs-badge-live {
+    background: #0a2a10;
+    color: #30cc50;
+    border: 1px solid #1a5a20;
+  }
+
+  .gs-footer {
+    background: #0f1e28;
+    color: #2a4a5a;
+  }
+
+  .gs-section-title {
+    font-size: 10px;
+    color: #5a8aaa;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #2a4a5a;
+    padding-bottom: 4px;
+  }
 }
 
 @layer utilities {

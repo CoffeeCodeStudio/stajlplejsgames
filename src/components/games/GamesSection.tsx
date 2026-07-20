@@ -62,15 +62,27 @@ export function GamesSection({ username }: GamesSectionProps) {
   const { lobbies } = useScribbleLobbies(guestId, username);
 
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
-  const [topScores, setTopScores] = useState<{ snake: number[]; memory: number[] }>({ snake: [], memory: [] });
+  const [topUsers, setTopUsers] = useState<{ snake: string[]; memory: string[] }>({ snake: [], memory: [] });
   const [personalBest, setPersonalBest] = useState<{ snake: number | null; memory: number | null }>({ snake: null, memory: null });
+
+  // Supabase-js has no GROUP BY, so we fetch a wide slice ordered by score
+  // and dedupe by username client-side, keeping the first (= highest)
+  // score per user — that's the "MAX(score) GROUP BY username" leaderboard.
+  const dedupeTopUsernames = (rows: { username: string; score: number }[]): string[] => {
+    const seen = new Set<string>();
+    for (const row of rows) {
+      if (!seen.has(row.username)) seen.add(row.username);
+      if (seen.size >= 10) break;
+    }
+    return Array.from(seen);
+  };
 
   const fetchActivity = useCallback(async () => {
     const [snakeRes, memoryRes, snakeTopRes, memoryTopRes] = await Promise.all([
       supabase.from("snake_highscores").select("id,username,score,created_at").order("created_at", { ascending: false }).limit(5),
       supabase.from("memory_highscores").select("id,username,score,created_at").order("created_at", { ascending: false }).limit(5),
-      supabase.from("snake_highscores").select("score").order("score", { ascending: false }).limit(10),
-      supabase.from("memory_highscores").select("score").order("score", { ascending: false }).limit(10),
+      supabase.from("snake_highscores").select("username,score").order("score", { ascending: false }).limit(200),
+      supabase.from("memory_highscores").select("username,score").order("score", { ascending: false }).limit(200),
     ]);
 
     const snakeEntries: ActivityEntry[] = (snakeRes.data || []).map(e => ({ ...e, game: "snake" as const }));
@@ -81,9 +93,9 @@ export function GamesSection({ username }: GamesSectionProps) {
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 8)
     );
-    setTopScores({
-      snake: (snakeTopRes.data || []).map(r => r.score),
-      memory: (memoryTopRes.data || []).map(r => r.score),
+    setTopUsers({
+      snake: dedupeTopUsernames(snakeTopRes.data || []),
+      memory: dedupeTopUsernames(memoryTopRes.data || []),
     });
   }, []);
 
@@ -144,121 +156,130 @@ export function GamesSection({ username }: GamesSectionProps) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="px-3 py-4 flex gap-3 items-start">
-        {/* Left column: compact game cards */}
-        <div className="w-32 shrink-0 space-y-2">
-          {GAMES.map(game => {
-            const playersLabel =
-              game.id === "scribble"
-                ? liveLobbyCount > 0
-                  ? `${liveLobbyCount} lobby${liveLobbyCount === 1 ? "" : "s"}`
-                  : "2–8"
-                : "1";
-            const myBest = game.id === "snake" ? personalBest.snake : game.id === "memory" ? personalBest.memory : null;
-            return (
-              <div key={game.id} className="retro-panel">
-                <div className="retro-panel-header !text-[7px] !px-2 !py-1 flex items-center justify-between gap-1">
-                  <span className="truncate">{game.icon} {game.name}</span>
-                  <span className="opacity-80 shrink-0">{playersLabel}</span>
+      <div className="gs-wrapper">
+        <div className="gs-inner">
+          <div className="flex gap-3 items-start p-3">
+            {/* Left column: compact game cards */}
+            <div className="w-[200px] shrink-0 space-y-2">
+              <div className="gs-tabs">
+                <span className="gs-tab active">Spel</span>
+              </div>
+
+              {GAMES.map(game => {
+                const playersLabel =
+                  game.id === "scribble"
+                    ? liveLobbyCount > 0
+                      ? `${liveLobbyCount} lobby${liveLobbyCount === 1 ? "" : "s"}`
+                      : "2–8"
+                    : "1";
+                const myBest = game.id === "snake" ? personalBest.snake : game.id === "memory" ? personalBest.memory : null;
+                return (
+                  <div key={game.id} className="gs-card">
+                    <div className="gs-card-header">
+                      <span className="truncate">{game.icon} {game.name}</span>
+                      <span className="opacity-80 shrink-0">{playersLabel}</span>
+                    </div>
+                    <div className="p-2 space-y-1.5">
+                      <button
+                        className="gs-play-btn"
+                        onClick={
+                          game.id === "memory" ? () => setView("memory") :
+                          game.id === "snake" ? () => setView("snake") :
+                          () => setView("scribble-lobbies")
+                        }
+                      >
+                        ▶ Spela
+                      </button>
+                      {myBest != null && (
+                        <p className="text-[9px] text-center" style={{ color: "#5a8aaa" }}>
+                          Ditt rekord: {myBest.toLocaleString("sv-SE")}p
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Open Scribble lobby peek */}
+              {openLobby && (
+                <div className="space-y-1">
+                  <div className="gs-section-title">Öppen lobby</div>
+                  <div className="gs-lobby">
+                    <div className="p-2 space-y-1.5">
+                      <p className="text-[10px] font-bold text-foreground truncate">{openLobby.title}</p>
+                      <p className="text-[9px] truncate" style={{ color: "#5a8aaa" }}>
+                        {openLobby.creator_username} · {openLobby.player_count || 0} spelare
+                      </p>
+                      <button
+                        className="gs-join-btn"
+                        onClick={() => setActiveLobbyId(openLobby.id)}
+                      >
+                        Hoppa in
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="retro-panel-body !p-1.5 space-y-1">
-                  <button
-                    className="retro-btn retro-btn-primary text-[9px] w-full"
-                    onClick={
-                      game.id === "memory" ? () => setView("memory") :
-                      game.id === "snake" ? () => setView("snake") :
-                      () => setView("scribble-lobbies")
-                    }
-                  >
-                    ▶ Spela
-                  </button>
-                  {myBest != null && (
-                    <p className="text-[9px] text-muted-foreground text-center">
-                      Ditt rekord: {myBest.toLocaleString("sv-SE")}p
-                    </p>
+              )}
+            </div>
+
+            {/* Right column: activity feed */}
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="gs-tabs">
+                <span className="gs-tab active">Aktivitet</span>
+              </div>
+
+              <div className="gs-card">
+                <div className="p-2">
+                  {lobbies.length > 0 && (
+                    <div className="gs-feed-row">
+                      <span className="text-[11px] truncate" style={{ color: "#d0e8f4" }}>
+                        🖌️ Scribble-lobby {lobbies.some(l => l.status === "playing") ? "spelar" : "väntar"}
+                      </span>
+                      <span className="gs-badge gs-badge-live">Live nu</span>
+                    </div>
+                  )}
+
+                  {activity.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground py-2">Inga rekord ännu — bli den första!</p>
+                  ) : (
+                    activity.map(entry => {
+                      // Rank by the row's username against the per-user
+                      // leaderboard (each user's own best score), not by
+                      // this particular row's score value — a user's older,
+                      // lower-scoring row still carries their current rank.
+                      const rank = topUsers[entry.game].indexOf(entry.username);
+                      let badge: { label: string; icon: string; className: string } | null = null;
+                      if (rank === 0) {
+                        badge = { label: "Guld", icon: "🥇", className: "gs-badge-gold" };
+                      } else if (rank === 1) {
+                        badge = { label: "Silver", icon: "🥈", className: "gs-badge-silver" };
+                      } else if (rank === 2) {
+                        badge = { label: "Brons", icon: "🥉", className: "gs-badge-bronze" };
+                      } else if (rank >= 3) {
+                        badge = { label: "Se topplistan", icon: "📊", className: "gs-badge-near" };
+                      }
+                      return (
+                        <div key={`${entry.game}-${entry.id}`} className="gs-feed-row">
+                          <span>{entry.game === "snake" ? "🐍" : "🧠"}</span>
+                          <span className="gs-username font-bold text-[11px]">{entry.username}</span>
+                          <span className="text-[11px]" style={{ color: "#a0c4d8" }}>· {entry.score}p</span>
+                          <span className="gs-time text-[9px]">{formatRelativeTime(entry.created_at)}</span>
+                          {badge && (
+                            <span className={`gs-badge ${badge.className}`}>
+                              {badge.icon} {badge.label}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
-            );
-          })}
-
-          {/* Open Scribble lobby peek */}
-          {openLobby && (
-            <div className="retro-panel">
-              <div className="retro-panel-header !text-[7px] !px-2 !py-1">
-                Öppen lobby
-              </div>
-              <div className="retro-panel-body !p-1.5 space-y-1">
-                <p className="text-[10px] font-bold text-foreground truncate">{openLobby.title}</p>
-                <p className="text-[9px] text-muted-foreground truncate">
-                  {openLobby.creator_username} · {openLobby.player_count || 0} spelare
-                </p>
-                <button
-                  className="retro-btn retro-btn-primary text-[9px] w-full"
-                  onClick={() => setActiveLobbyId(openLobby.id)}
-                >
-                  Hoppa in
-                </button>
-              </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Right column: activity feed */}
-        <div className="flex-1 min-w-0">
-          <div className="retro-panel">
-            <div className="retro-panel-header flex items-center justify-between">
-              <span>📊 Aktivitet</span>
-            </div>
-            <div className="retro-panel-body space-y-2">
-              {lobbies.length > 0 && (
-                <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-2">
-                  <span className="text-[11px] text-foreground truncate">
-                    🖌️ Scribble-lobby {lobbies.some(l => l.status === "playing") ? "spelar" : "väntar"}
-                  </span>
-                  <span className="text-[8px] font-pixel px-1.5 py-0.5 shrink-0" style={{ background: "hsl(var(--online-green))", color: "#fff" }}>
-                    Live nu
-                  </span>
-                </div>
-              )}
-
-              {activity.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground">Inga rekord ännu — bli den första!</p>
-              ) : (
-                activity.map(entry => {
-                  // Rank by matching the entry's score value against the
-                  // top-10 leaderboard, not by the entry's position in this
-                  // feed — the feed is sorted by time, the leaderboard by score.
-                  const rank = topScores[entry.game].indexOf(entry.score);
-                  let badge: { label: string; icon: string; bg: string; fg: string } | null = null;
-                  if (rank === 0) {
-                    badge = { label: "Guld", icon: "🥇", bg: "hsl(45 90% 55%)", fg: "#000" };
-                  } else if (rank === 1) {
-                    badge = { label: "Silver", icon: "🥈", bg: "hsl(210 15% 75%)", fg: "#000" };
-                  } else if (rank === 2) {
-                    badge = { label: "Brons", icon: "🥉", bg: "hsl(30 55% 45%)", fg: "#fff" };
-                  } else if (rank >= 3) {
-                    badge = { label: "Se topplistan", icon: "📊", bg: "hsl(210 80% 55%)", fg: "#fff" };
-                  }
-                  return (
-                    <div key={`${entry.game}-${entry.id}`} className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[11px] text-foreground truncate">
-                          {entry.game === "snake" ? "🐍" : "🧠"} <strong>{entry.username}</strong>
-                          <span className="text-muted-foreground"> · {entry.score}p</span>
-                        </p>
-                        <p className="text-[9px] text-muted-foreground">{formatRelativeTime(entry.created_at)}</p>
-                      </div>
-                      {badge && (
-                        <span className="text-[8px] font-pixel px-1.5 py-0.5 shrink-0" style={{ background: badge.bg, color: badge.fg }}>
-                          {badge.icon} {badge.label}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
+          <div className="gs-footer text-[9px] text-center py-1.5">
+            🎮 GAME ZONE
           </div>
         </div>
       </div>
