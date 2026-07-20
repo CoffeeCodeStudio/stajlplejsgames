@@ -62,15 +62,15 @@ export function GamesSection({ username }: GamesSectionProps) {
   const { lobbies } = useScribbleLobbies(guestId, username);
 
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
-  const [bestScores, setBestScores] = useState<{ snake: number; memory: number }>({ snake: 0, memory: 0 });
+  const [topScores, setTopScores] = useState<{ snake: number[]; memory: number[] }>({ snake: [], memory: [] });
   const [personalBest, setPersonalBest] = useState<{ snake: number | null; memory: number | null }>({ snake: null, memory: null });
 
   const fetchActivity = useCallback(async () => {
-    const [snakeRes, memoryRes, snakeBestRes, memoryBestRes] = await Promise.all([
+    const [snakeRes, memoryRes, snakeTopRes, memoryTopRes] = await Promise.all([
       supabase.from("snake_highscores").select("id,username,score,created_at").order("created_at", { ascending: false }).limit(5),
       supabase.from("memory_highscores").select("id,username,score,created_at").order("created_at", { ascending: false }).limit(5),
-      supabase.from("snake_highscores").select("score").order("score", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("memory_highscores").select("score").order("score", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("snake_highscores").select("score").order("score", { ascending: false }).limit(10),
+      supabase.from("memory_highscores").select("score").order("score", { ascending: false }).limit(10),
     ]);
 
     const snakeEntries: ActivityEntry[] = (snakeRes.data || []).map(e => ({ ...e, game: "snake" as const }));
@@ -81,9 +81,9 @@ export function GamesSection({ username }: GamesSectionProps) {
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 8)
     );
-    setBestScores({
-      snake: snakeBestRes.data?.score ?? 0,
-      memory: memoryBestRes.data?.score ?? 0,
+    setTopScores({
+      snake: (snakeTopRes.data || []).map(r => r.score),
+      memory: (memoryTopRes.data || []).map(r => r.score),
     });
   }, []);
 
@@ -226,14 +226,19 @@ export function GamesSection({ username }: GamesSectionProps) {
                 <p className="text-[11px] text-muted-foreground">Inga rekord ännu — bli den första!</p>
               ) : (
                 activity.map(entry => {
-                  const best = bestScores[entry.game];
+                  // Rank by matching the entry's score value against the
+                  // top-10 leaderboard, not by the entry's position in this
+                  // feed — the feed is sorted by time, the leaderboard by score.
+                  const rank = topScores[entry.game].indexOf(entry.score);
                   let badge: { label: string; icon: string; bg: string; fg: string } | null = null;
-                  if (best > 0) {
-                    if (entry.score >= best) {
-                      badge = { label: "Nytt rekord", icon: "🥇", bg: "hsl(45 90% 55%)", fg: "#000" };
-                    } else if (entry.score >= best * 0.85) {
-                      badge = { label: "Nära rekord", icon: "⚡", bg: "hsl(210 80% 55%)", fg: "#fff" };
-                    }
+                  if (rank === 0) {
+                    badge = { label: "Guld", icon: "🥇", bg: "hsl(45 90% 55%)", fg: "#000" };
+                  } else if (rank === 1) {
+                    badge = { label: "Silver", icon: "🥈", bg: "hsl(210 15% 75%)", fg: "#000" };
+                  } else if (rank === 2) {
+                    badge = { label: "Brons", icon: "🥉", bg: "hsl(30 55% 45%)", fg: "#fff" };
+                  } else if (rank >= 3) {
+                    badge = { label: "Se topplistan", icon: "📊", bg: "hsl(210 80% 55%)", fg: "#fff" };
                   }
                   return (
                     <div key={`${entry.game}-${entry.id}`} className="flex items-center justify-between gap-2">
