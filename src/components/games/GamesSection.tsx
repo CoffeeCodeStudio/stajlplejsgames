@@ -229,10 +229,8 @@ export function GamesSection({ username }: GamesSectionProps) {
                   const best = bestScores[entry.game];
                   let badge: { label: string; icon: string; bg: string; fg: string } | null = null;
                   if (best > 0) {
-                    if (entry.score > best) {
+                    if (entry.score >= best) {
                       badge = { label: "Nytt rekord", icon: "🥇", bg: "hsl(45 90% 55%)", fg: "#000" };
-                    } else if (entry.score === best) {
-                      badge = { label: "Lika rekord", icon: "🤝", bg: "hsl(50 95% 60%)", fg: "#000" };
                     } else if (entry.score >= best * 0.85) {
                       badge = { label: "Nära rekord", icon: "⚡", bg: "hsl(210 80% 55%)", fg: "#fff" };
                     }
