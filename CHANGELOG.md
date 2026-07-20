@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-07-20 — Ny spelvy med aktivitetsfeed, personliga rekord + embed-spärr borttagen
+
+**Ändringar:**
+- `GamesSection.tsx` omgjord till tvåkolumnslayout: smal vänsterkolumn med kompakta spelkort (Memory/Snake/Scribble) + peek på öppen Scribble-lobby, bred högerkolumn med en aktivitetsfeed som hämtar senaste rekorden från `snake_highscores` och `memory_highscores`.
+- Personligt rekord ("Ditt rekord: X p") visas under respektive spelkort, hämtat per `username` från highscore-tabellerna.
+- Tre badge-typer i aktivitetsfeeden: 🥇 **Nytt rekord** (poäng > globalt rekord), 🤝 **Lika rekord** (poäng = globalt rekord exakt), ⚡ **Nära rekord** (poäng ≥ 85 % av rekordet). Max en badge per rad.
+- Snake-canvasen är nu responsiv (`width: 100%`, `maxWidth` satt till den ursprungliga pixelstorleken, `aspectRatio: 1/1`) istället för fast 320×320px — skalar ner på smala mobilskärmar utan att tappa pixel-rendering. Touch-styrning (D-pad) och tangentbordsstyrning fanns redan och är oförändrade.
+- **`useEmbedGuard` borttagen (returnerar alltid `true`)** — appen visas nu oavsett iframe/referrer/domän. Detta river upp iframe-spärren som lades till 2026-07-19 (se nedan). Säkerheten hanteras separat framöver enligt uttrycklig instruktion; det finns i nuläget **ingen** kontroll av var appen laddas in, bara av vem som får skriva highscores (se RLS/edge-functions från 07-19, som fortfarande gäller).
+
+---
+
 ## 2026-07-19 — Iframe-spärr + stängde kvarvarande hål i Snake RLS-policyerna
 
 **Bakgrund:** Snake-highscores gick att fuska med av vem som helst med länken till `stajlplejsgames.vercel.app`, eftersom (a) sidan gick att öppna och spela helt utanför StajlPlejs iframe, och (b) `snake_highscores` hade en öppen databas-policy (`WITH CHECK (true)` för anonym insert). En tidigare session (15 juli) byggde redan server-side anti-fusk för Snake (`snake-game` edge-funktionen, `snake_sessions`/`snake_events`) och migrerade till ett nytt Supabase-projekt efter att det gamla blev bannat — men konsolideringen till `001_initial_schema.sql` återinförde av misstag de öppna anon-policyerna på `snake_highscores`, `snake_sessions` och `snake_events`, vilket gjorde det möjligt att kringgå hela anti-fusk-logiken genom att skriva direkt mot de tabellerna via Supabase-API:et.

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useEmbedGuard } from "@/hooks/useEmbedGuard";
 import { GamesSection } from "@/components/games/GamesSection";
@@ -6,7 +7,14 @@ export default function GamesPage() {
   const { username } = usePlayer();
   const { isEmbedded } = useEmbedGuard();
 
+  console.log("Index: username =", username, "isEmbedded =", isEmbedded);
+
+  useEffect(() => {
+    if (isEmbedded) console.log("Index: GamesSection mounted");
+  }, [isEmbedded]);
+
   if (!isEmbedded) {
+    console.log("Index: isEmbedded is false — GamesSection will NOT mount");
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center max-w-[500px] mx-auto text-center px-6 gap-3">
         <h1 className="font-pixel text-sm text-primary">GAME ZONE</h1>
@@ -17,8 +25,10 @@ export default function GamesPage() {
     );
   }
 
+  console.log("Index: isEmbedded is true — GamesSection will mount");
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col max-w-[500px] mx-auto">
+    <div className="min-h-screen bg-background text-foreground flex flex-col w-full">
       {/* Top navigation bar */}
       <header className="retro-nav text-base">
         <span className="retro-nav-item active">🎮 SPEL</span>

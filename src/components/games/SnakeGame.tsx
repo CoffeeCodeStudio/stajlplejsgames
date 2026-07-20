@@ -540,13 +540,16 @@ export function SnakeGame({ onBack, username }: Props) {
           </div>
         </div>
 
-        {/* Game canvas with retro glow border */}
+        {/* Game canvas with retro glow border — scales down to fit narrow
+            screens (width: 100%) but never grows past the native pixel
+            grid (maxWidth), so it stays crisp on desktop. */}
         <div className="flex justify-center">
           <div
             className="relative"
             style={{
-              width: canvasSize + 4,
-              height: canvasSize + 4,
+              width: "100%",
+              maxWidth: canvasSize + 4,
+              aspectRatio: "1 / 1",
               border: '2px solid #00ff44',
               boxShadow: '0 0 12px rgba(0, 255, 68, 0.4), inset 0 0 12px rgba(0, 255, 68, 0.1)',
               background: '#0a0a1a',
@@ -556,7 +559,7 @@ export function SnakeGame({ onBack, username }: Props) {
               ref={canvasRef}
               width={canvasSize}
               height={canvasSize}
-              style={{ display: "block", imageRendering: "pixelated" }}
+              style={{ display: "block", width: "100%", height: "100%", imageRendering: "pixelated" }}
             />
           </div>
         </div>

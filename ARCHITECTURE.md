@@ -2,7 +2,7 @@
 
 ## Översikt
 
-Appen är en fristående spelmodul inbäddad som iframe på stajlplejs.se. Den har ingen egen autentisering — användarnamnet skickas in via URL-parameter från värdssidan.
+Appen är en fristående spelmodul tänkt att bäddas in som iframe på stajlplejs.se. Den har ingen egen autentisering — användarnamnet skickas in via URL-parameter från värdssidan.
 
 ```
 stajlplejs.se
@@ -10,6 +10,8 @@ stajlplejs.se
         └── StajlPlejs Game Zone (denna app)
               └── Supabase (databas + edge functions)
 ```
+
+> **OBS (2026-07-20):** `useEmbedGuard` returnerar numera alltid `true` — appen laddas och visas oavsett om den faktiskt är inbäddad i en iframe, oavsett referrer/domän. Det finns alltså i nuläget ingen spärr mot att öppna appen direkt via Vercel-URL:en. Detta gjordes avsiktligt (se CHANGELOG 2026-07-20); säkerhet på den fronten är tänkt att hanteras på annat sätt senare. Skrivskydd mot highscore-tabellerna (RLS + Edge Functions) påverkas inte av detta och gäller fortfarande.
 
 ---
 
@@ -52,6 +54,7 @@ src/
     usePlayer.ts           # Läser ?usr= från URL
     useGuestId.ts          # Skapar/hämtar anonym gäst-ID från localStorage
     useScribble.ts         # Supabase-logik för Scribble (lobbys, spelare, gissningar)
+    useEmbedGuard.ts       # Returnerar alltid { isEmbedded: true } — ingen faktisk spärr just nu
   lib/
     scribble-logic.ts      # Ren spellogik för Scribble (testbar, utan sidoeffekter)
     game-effects.ts        # Ljud och konfetti-effekter
@@ -72,8 +75,14 @@ supabase/
 
 ## Spel
 
+`GamesSection.tsx` renderar en tvåkolumnslayout på startvyn:
+- **Vänster (smal):** kompakta spelkort för Memory/Snake/Scribble med Spela-knapp och, om användaren är inloggad, personligt rekord hämtat från respektive highscore-tabell (`... where username = username`). Under korten visas en peek på en öppen Scribble-lobby om en finns.
+- **Höger (bred):** aktivitetsfeed som slår ihop de senaste raderna från `snake_highscores` och `memory_highscores`, sorterat på tid. Varje rad jämförs mot det globala rekordet för det spelet och får max en badge: 🥇 Nytt rekord (poäng > rekord), 🤝 Lika rekord (poäng = rekord), ⚡ Nära rekord (poäng ≥ 85 % av rekordet).
+
 ### Snake
 - All spellogik körs på canvas i browsern
+- Canvasen är responsiv (CSS `width: 100%` + `aspect-ratio: 1/1`, `max-width` satt till den ursprungliga pixelstorleken) — skalar ner på smala mobilskärmar, skalar aldrig upp förbi native-storleken
+- Styrs med tangentbord (piltangenter/WASD) och/eller ett touch-D-pad (▲◄▼►, visas bara under `md`-brytpunkten) — båda anropar samma riktningslogik
 - Vid äpple: skickar `apple`-event till Edge Function (`snake-game`)
 - Vid game over: skickar `finish` till Edge Function som validerar och sparar highscore
 - Lokalt bästa sparas i `localStorage` som fallback
