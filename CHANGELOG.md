@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-07-21 — Fixade två separata buggar som hindrade Snake/Memory-highscore från att sparas
+
+**Bakgrund:** Användare rapporterade att high score inte sparades i Snake. Felsökning visade två oberoende, staplade buggar i sparkedjan klient → edge-funktion → databas — bägge behövde fixas för att en runda faktiskt skulle sparas.
+
+**Bugg 1 — 401 vid gatewayen (`verify_jwt: true`):** `snake-game`- och `memory-game`-funktionerna var deployade med `verify_jwt: true`, men klientkoden (`SnakeGame.tsx`/`MemoryGame.tsx`) skickar bara en `apikey`-header, ingen `Authorization: Bearer <JWT>`. Supabase's edge-gateway avvisar då varje anrop med 401 innan funktionskoden ens körs. Felet svaldes tyst av klientens `.catch(() => {})`, så `session_token` sattes aldrig och `saveScore()` avbröt tyst (`if (!sessionTokenRef.current) return`). Fix: `verify_jwt: false` för båda funktionerna — de hanterar redan sin egen auktorisering via session-token + service-role, precis som `bot-cron`/`auth-webhook` redan gör.
+
+**Bugg 2 — 500 vid DB-inserten (schema-drift):** Efter 401-fixet gav `action: "start"` istället `500 Failed to create session`. Orsak: den skarpa `snake_sessions`-tabellen har driftat från `001_initial_schema.sql` och har idag en `user_id uuid NOT NULL`-kolumn utan default (plus `app`, `current_apple_x/y`, `grid_cols`/`grid_rows` som inte finns i migrationsfilen — sannolikt en delad/multi-app-tabell). `snake-game`-funktionens insert i `snake_sessions` satte aldrig `user_id`, till skillnad från dess insert i `snake_highscores` som redan skickade en placeholder-UUID. Fix: la till samma placeholder (`user_id: "00000000-0000-0000-0000-000000000000"`) i `snake_sessions`-inserten. `app`- och grid-kolumnerna lämnades orörda, de har fungerande defaults.
+
+**Ändringar:**
+- `supabase/functions/snake-game/index.ts`: `user_id`-placeholder tillagd i `snake_sessions`-inserten (action `start`).
+- Deploy-config: `verify_jwt: false` satt för både `snake-game` (v112) och `memory-game` (v107) i Supabase-projektet.
+
+**Verifierat:**
+- `action: "start"` mot `snake-game` ger nu `200 OK` med giltig `session_token` (tidigare 401, sen 500).
+- RLS-låsningen från 07-19 är fortfarande intakt — direkt anon-läsning mot `snake_sessions` nekas fortfarande.
+
+**Kvarstår:**
+- Verifiera i klienten: spela ett riktigt Snake-parti, bekräfta att "🏆 Ditt rekord har sparats!"-toasten visas och att poängen dyker upp i topplistan.
+- `memory-game` fick bara 401-fixet (verify_jwt: false) — inte undersökt om samma typ av schema-drift (`user_id NOT NULL` utan placeholder) finns i `memory_sessions`.
+
+---
+
 ## 2026-07-20 — Ny spelvy med aktivitetsfeed, personliga rekord + embed-spärr borttagen
 
 **Ändringar:**

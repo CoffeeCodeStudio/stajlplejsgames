@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
       const { data, error } = await supabase
         .from("snake_sessions")
-        .insert({ username: sanitized })
+        .insert({ user_id: "00000000-0000-0000-0000-000000000000", username: sanitized })
         .select("id, session_token")
         .single();
 
