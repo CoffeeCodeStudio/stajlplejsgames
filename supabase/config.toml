@@ -1,1 +1,7 @@
 project_id = "ifcsoarihdrrlxylaydl"
+
+[functions.snake-game]
+verify_jwt = false
+
+[functions.memory-game]
+verify_jwt = false
