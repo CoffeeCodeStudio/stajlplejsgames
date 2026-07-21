@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-07-21 (2) — Fixade Memory-sessionsbugg (samma schema-drift som Snake) + Snake anti-fusk kasserade giltiga resultat
+
+**Bakgrund:** Efter fixarna nedan (samma dag, tidigare på dagen) rapporterades ytterligare två separata sparproblem: Memory sparade fortfarande inte, och en specifik Snake-spelare (`MagniOperis`) fick sina resultat inte räknade trots att han åt äpplena live i spelet.
+
+**Bugg 3 — Memory hade samma schema-drift som Snake:** `memory-game`-funktionens insert i `memory_sessions` saknade `user_id`, precis som `snake_sessions`-inserten gjorde innan Bugg 2 (nedan) fixades. Detta var faktiskt redan flaggat som "kvarstår" i föregående changelog-post men inte åtgärdat. Fix: samma placeholder-UUID tillagd i `memory_sessions`-inserten (`supabase/functions/memory-game/index.ts`).
+
+**Bugg 4 — Snake anti-fusk kasserade giltiga snabba plockningar:** `snake-game`s validering krävde minst 200ms mellan *varje enskilt* äpple-event. Problemet: varje äpple-plockning skickas som en egen fire-and-forget HTTP-request, så servern mäter *ankomsttid* för requesten, inte klientens faktiska tick-tid. Nätverksjitter kunde därför göra att två helt legitima plockningar (klientens min-tick är 60ms) såg ut att komma nästan samtidigt till servern. Verifierat med SQL mot `snake_events`: `MagniOperis` två bästa körningar (1560p/47 äpplen och 1240p/32 äpplen) blev båda `is_valid = false` på grund av **en enda** avvikande lucka (34ms respektive 89ms) — resten av varje omgång låg på 600ms–15s mellan äpplen, dvs helt normalt spel.
+
+Fix (`supabase/functions/snake-game/index.ts`): tog bort den känsliga per-par-kollen (hård 200ms-gräns på varje enskild lucka) och ersatte med två nivåer:
+- `ABSOLUTE_MIN_MS_BETWEEN_APPLES = 15` — hård golv för en *enskild* lucka, fångar bara i praktiken samtidiga (dubblerade/scriptade) events.
+- `MIN_MS_BETWEEN_APPLES = 200` — nu ett **snittkrav** över hela omgången (`total_span / (antal_äpplen - 1)`), tål enstaka jitter men stoppar fortfarande botar som håller orealistiskt tempo genom hela omgången.
+
+**Manuell rättelse av redan förlorade resultat:** `MagniOperis` två felaktigt kasserade sessioner (`0988a360...` = 1560p, `8d02f87f...` = 1240p) hade aldrig nått `snake_highscores`. Poäng, äpplen och tid räknades fram direkt ur `snake_events` (samma formel som edge-funktionen använder) och infogades manuellt via SQL, med `created_at` satt till sessionens `finished_at` (inte tidpunkten för rättelsen). Sessionerna markerades även `is_valid = true` i efterhand.
+
+**Kvarstår:**
+- Verifiera i klienten efter deploy: spela ett Snake-parti med snabba plockningar i följd, bekräfta att resultatet sparas.
+- `memory-game`s anti-fusk-koll (350ms hård per-par-gräns) har samma jitterrisk som Snake hade — inte omskriven till snitt-baserad koll än, eftersom inget konkret fall är rapporterat där ännu.
+- Deploy krävs för båda funktionerna (`snake-game`, `memory-game`) — gjordes inte av mig, jag saknar deploy-behörighet till projektet `ifcsoarihdrrlxylaydl` från den här sessionen.
+
+---
+
 ## 2026-07-21 — Fixade två separata buggar som hindrade Snake/Memory-highscore från att sparas
 
 **Bakgrund:** Användare rapporterade att high score inte sparades i Snake. Felsökning visade två oberoende, staplade buggar i sparkedjan klient → edge-funktion → databas — bägge behövde fixas för att en runda faktiskt skulle sparas.

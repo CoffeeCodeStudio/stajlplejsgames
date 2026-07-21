@@ -131,7 +131,15 @@ Både Snake och Memory använder server-side validering:
 1. **Start** — skapar en session i DB, returnerar `session_token`
 2. **Events** — klienten loggar händelser (äpplen/kortpar) med tidsstämplar
 3. **Finish** — servern validerar:
-   - Minsta tid mellan events (för snabb = flaggas)
+   - Minsta tid mellan events (för snabb = flaggas). Snake: eftersom varje
+     äpple-plockning är en egen fire-and-forget request mäter servern
+     *ankomsttid*, inte klient-tick-tid, så nätverksjitter kan göra enstaka
+     legitima events se ut som de kom nästan samtidigt. Snake använder därför
+     en tvådelad koll — 15ms hård gräns för en enskild lucka (fångar bara
+     i praktiken samtidiga events) + 200ms snittgräns över hela omgången
+     (tål enstaka jitter, stoppar ändå botar). Memory har fortfarande bara
+     en hård per-par-gräns (350ms) — inte testat om samma jitterproblem
+     finns där.
    - Minsta total speltid
    - Rätt antal events (Memory kräver exakt rätt antal par)
    - Sanity-cap på äppelantal (Snake)

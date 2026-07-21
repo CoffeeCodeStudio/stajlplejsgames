@@ -14,7 +14,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MIN_MS_BETWEEN_APPLES = 200; // minimum ms between apple pickups (game min tick is 60ms but snake must travel)
+const MIN_MS_BETWEEN_APPLES = 200; // average ms/apple floor over the whole run — real games (see snake-game/index.ts history) average well above 1000ms/apple, so this only catches sustained bot-level pace
+const ABSOLUTE_MIN_MS_BETWEEN_APPLES = 15; // hard floor for a single gap — below this, two "pickups" are effectively simultaneous and can't be jitter
 const MIN_GAME_DURATION_MS = 2000;
 const MAX_SCORE_PER_APPLE = 50; // sanity cap — no apple can give more than this
 
@@ -120,14 +121,33 @@ Deno.serve(async (req) => {
 
       let invalidReason: string | null = null;
 
-      // 1. Min time between apples
+      // 1. Min time between apples. Each apple pickup is its own fire-and-forget
+      // HTTP request, so event_at reflects server arrival time, not client tick
+      // time — network jitter alone can make two legitimately consecutive
+      // pickups (60ms apart client-side) arrive far closer together, or even
+      // reordered. A hard per-pair floor produced false positives on real,
+      // high-scoring runs (e.g. a 47-apple run flagged over a single 34ms gap
+      // against an otherwise 600ms-15s/apple pace). So: only reject a single
+      // gap if it's implausible even accounting for jitter (near-simultaneous
+      // arrival), and otherwise judge pace by the average across the whole
+      // run, which averages out jitter on individual events.
       if (appleEvents.length > 1) {
         for (let i = 1; i < appleEvents.length; i++) {
           const diff = new Date(appleEvents[i].event_at).getTime() - new Date(appleEvents[i - 1].event_at).getTime();
-          if (diff < MIN_MS_BETWEEN_APPLES) {
+          if (diff < ABSOLUTE_MIN_MS_BETWEEN_APPLES) {
             invalidReason = `Apples too fast: ${diff}ms between apple ${i - 1} and ${i}`;
             break;
           }
+        }
+      }
+
+      // 1b. Average pace across the whole run must still be physically
+      // possible, even if no single gap tripped the absolute floor above.
+      if (!invalidReason && appleEvents.length > 1) {
+        const span = new Date(appleEvents[appleEvents.length - 1].event_at).getTime() - new Date(appleEvents[0].event_at).getTime();
+        const avgMsPerApple = span / (appleEvents.length - 1);
+        if (avgMsPerApple < MIN_MS_BETWEEN_APPLES) {
+          invalidReason = `Average apple pace too fast: ${avgMsPerApple.toFixed(0)}ms/apple over ${appleEvents.length} apples`;
         }
       }
 

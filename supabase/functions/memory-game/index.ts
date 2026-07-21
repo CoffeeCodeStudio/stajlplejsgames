@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
       const { data, error } = await supabase
         .from("memory_sessions")
         .insert({
+          user_id: "00000000-0000-0000-0000-000000000000",
           username: sanitizedUsername,
           difficulty,
           pairs: config.pairs,
