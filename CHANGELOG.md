@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-07-26 — Snake tappade varannan sparning (React-closure), sessionstoken-race, retro-scrollbar + feed-layout
+
+**Bakgrund:** Trots fixarna 07-21 rapporterades återigen att en lång Snake-omgång (58 äpplen) inte sparades. Den här gången satt felet i klienten, inte i edge-funktionen eller databasen — sparkedjan från 07-21 var hel hela tiden.
+
+**Bugg 5 — `scoreSaved` som React-state gav en closure-bugg som tappade varannan omgång:** `saveScore()` i `SnakeGame.tsx` vaktade mot dubbelsparning med `if (scoreSaved) return;` där `scoreSaved` var React-state och låg i hookens dependency-lista. Spelloopen startas med `setInterval(() => tick(), ...)` och fångar den `tick` som fanns vid *det* renderet; `tick` fångar i sin tur `endGame` → `saveScore`. Loopen schemalägger dessutom om sig själv mot samma frusna referens vid varje äpple.
+
+Kedjan: när spel 1 sparas anropas `setScoreSaved(true)`, vilket skapar ett nytt `saveScore` med `scoreSaved === true` → nytt `endGame` → nytt `tick` → nytt `startGame`. Knappen "🔄 Igen" pekar nu på det nya `startGame`, som mycket riktigt kör `setScoreSaved(false)` — men dess `setTimeout` startar loopen mot den **gamla** `tick`, som fortfarande bär `saveScore` med `scoreSaved === true`. Spel 2 kör alltså hela vägen på en closure där guarden redan är sann, och `saveScore` returnerar direkt utan att skicka `finish`.
+
+Eftersom den tidiga returen ligger *före* `setScoreSaved(true)` förblir state `false` efteråt, så spel 3 sparar korrekt, spel 4 misslyckas, och så vidare — **varannan omgång tappades**. Det förklarar både varför felet såg intermittent ut och varför just långa omgångar drabbades: en 58-äpplens-runda är sällan den första man spelar. Den tidiga returen hoppade dessutom över `localStorage`-uppdateringen, så inte ens det lokala rekordet skrevs.
+
+Fix (`SnakeGame.tsx`): guarden flyttad till `scoreSavedRef` (ref, inte state) så att den alltid speglar nuläget oavsett closure. `saveScore` tappar därmed `scoreSaved` ur sina deps och slutar återskapas. Dessutom infört `tickRef`, som pekas om vid varje render, så att båda `setInterval` kör `tickRef.current()` och loopen aldrig kan fastna i en gammal `tick`. Det senare rättar på köpet att `endGame` läste ett fruset `highScore` vid konfetti-/rekordjämförelsen.
+
+**Bugg 6 — sent `start`-svar kunde skriva över sessionstoken vid snabb omstart:** `startGame()` nollställer `sessionTokenRef`, skjuter iväg `action: "start"` utan `await` och startar spelloopen efter 50ms oavsett om svaret hunnit fram. Klickar spelaren "🔄 Igen" innan svaret landat kan det gamla svarets `.then()` skriva över `sessionTokenRef` med föregående omgångs token. `apple`- och `finish`-anropen går då mot fel session — och eftersom den sessionen oftast redan är avslutad svarar servern `"Session already finished"`, varpå den pågående omgången aldrig sparas. Fix: `gameGenerationRef` räknas upp vid varje `startGame()`, och `.then()` sätter bara token om generationen fortfarande stämmer.
+
+**Bugg 7 (mindre) — `snake_sessions` saknade äppelantal:** sessionsraden lagrade slutpoängen men inte hur många äpplen som gav den, så en session gick inte att stämma av mot sin egen händelselogg utan att fråga `snake_events` separat. `snake_highscores` hade redan `apples_eaten`. Ny kolumn `apples_eaten integer` i `snake_sessions` (nullable utan default — äldre rader har okänt antal och ska inte påstå 0), och `snake-game`s `finish` skriver nu `appleEvents.length` dit. Skrivs även när omgången underkänts, så att en avvisad session går att felsöka i efterhand.
+
+**Felspår som inte var orsaken (dokumenterat för nästa gång):** Felsökningen började med slutsatsen att `snake_events` saknade kolumnen `event_type`, vilket skulle ha gjort att varje äpple-insert misslyckades tyst och `finish` alltid räknade 0 äpplen. En migration skrevs och kördes — **mot fel Supabase-projekt**. MCP-anslutningen i sessionen når bara `ygqxkgduqlcgjqtelnjv`, medan appen enligt `.env` använder `kmbpnkkhbfelvpqzpdxy` (och den här changeloggen nämner på 07-21 ett tredje ID, `ifcsoarihdrrlxylaydl`). Sessionsdatan som citerades som bevis kom alltså från fel databas. E2E-testet nedan visade sedan att `event_type` finns och fungerar i det skarpa projektet. Migrationen togs bort igen (commit `aba1ce0`). **Verifiera alltid projekt-ID mot `.env` innan slutsatser dras ur databasen.**
+
+**UI — retro-scrollbar:** ny `.scrollbar-nostalgic` i `src/index.css` (10px bred, rak/pixlad utan rundade hörn, `#c0562a` thumb på `#2a1a0a` track, `#d4683a` vid hover) för att matcha stajlplejs.se. `scrollbar-width`/`scrollbar-color` ingår så att Firefox får stilen — `::-webkit-scrollbar` är Chromium/Safari-specifikt. Applicerad på spelvyn (`GamesSection`) och båda topplistorna (`SnakeGame`, `MemoryGame`).
+
+**UI — aktivitetsfeedens rader spillde över panelen:** `.gs-badge` hade `white-space: nowrap` men saknade `flex-shrink: 0`, så badges trycktes ut förbi panelens högerkant; tidsstämplarna saknade nowrap och bröts över tre rader. Fix: poäng, tid och badge pinnade med `flex-shrink: 0`, användarnamnet trunkerar istället. Det räckte dock inte på radens ~240px — namnen blev oläsbara ("Ma…", och på ett par rader inget namn alls). Därför även: badgen för rank ≥ 4 ("Se topplistan") borttagen, eftersom den tog ~90px för att säga "inte på pallen", och tidsstämplarna förkortade till `nu`/`5m`/`3t`/`4d`. Död CSS `.gs-badge-near` städad.
+
+**Nytt testskript:** `scripts/test-snake-long-session.mjs` (Node 18+, inga beroenden) spelar en full session mot den deployade edge-funktionen i mänskligt tempo — `start` → N × `apple` → `finish` — och jämför serverns poäng mot en lokal kopia av `calcScore()`. Kräver `--yes` eftersom den skriver en riktig rad i den publika topplistan.
+
+**Verifierat:**
+- E2E mot skarpa projektet: 70 äpplen på 101.9s → `{"valid":true,"score":3045,"apples":70}`, 0 misslyckade events. Bekräftar att edge-funktion, anti-fusk och `snake_highscores`-skrivning fungerar i produktion.
+- `tsc --noEmit` och `vite build` rena.
+- Feed-layouten kontrollerad i webbläsare på 1440px: inga rader spiller över panelkanten, namn som `Gti88`, `Queensyard` och `El-magnifico` visas i sin helhet.
+
+**Kvarstår:**
+- **Migrationen `003_add_snake_sessions_apples_eaten.sql` är inte körd mot `kmbpnkkhbfelvpqzpdxy`** — jag saknar åtkomst till projektet från den här sessionen. Måste köras **före** deploy av `snake-game`, annars kraschar `finish` med PGRST204 på okänd kolumn (samma felläge som `user_id` gav i `7fa4aee`).
+- `snake-game` behöver deployas efter migrationen.
+- Testraderna från E2E-körningarna ligger kvar överst på topplistan: `delete from snake_highscores where username = 'TestBot';` (två rader, 55p och 3045p).
+- Verifiera i klienten efter deploy: spela **två** omgångar i rad via "🔄 Igen" och bekräfta att båda ger spartoasten — det är precis det Bugg 5 bröt.
+- E2E-skriptet testar HTTP-protokollet, inte React-komponenten. Det hade **inte** fångat Bugg 5 eller 6. Ett komponenttest som spelar två omgångar i följd vore det som faktiskt skyddar mot regression.
+- `MemoryGame.tsx` har samma mönster som Bugg 5 (state-baserad `scoreSaved`-guard i en `setInterval`-driven loop) — inte granskat, inget fall rapporterat.
+- Appens bredd är fortfarande låst av `max-w-[500px]` i `Index.tsx`. Iframen på stajlplejs.se är enligt `README.md` `width="100%"`, så begränsningen är självpåtagen — men hur bred värdsidans kolumn faktiskt är är okänt.
+
+---
+
 ## 2026-07-21 (2) — Fixade Memory-sessionsbugg (samma schema-drift som Snake) + Snake anti-fusk kasserade giltiga resultat
 
 **Bakgrund:** Efter fixarna nedan (samma dag, tidigare på dagen) rapporterades ytterligare två separata sparproblem: Memory sparade fortfarande inte, och en specifik Snake-spelare (`MagniOperis`) fick sina resultat inte räknade trots att han åt äpplena live i spelet.
