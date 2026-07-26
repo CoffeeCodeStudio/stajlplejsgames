@@ -289,7 +289,7 @@ export function MemoryGame({ onBack, username }: Props) {
                 </button>
               ))}
             </div>
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto scrollbar-nostalgic">
               {leaderboard.length === 0 ? (
                 <p className="text-center text-muted-foreground text-xs py-8">Inga poäng ännu — bli den första!</p>
               ) : leaderboard.map((entry, i) => {

@@ -482,7 +482,7 @@ export function SnakeGame({ onBack, username }: Props) {
           <button onClick={() => setGameState("menu")} className="retro-btn text-[10px]">← Tillbaka till spel</button>
           <div className="retro-panel">
             <div className="retro-panel-header">🏆 TOPPLISTA — SNAKE</div>
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto scrollbar-nostalgic">
               {leaderboard.length === 0 ? (
                 <p className="text-center text-muted-foreground text-xs py-8 font-pixel">Ingen har spelat ännu — bli först!</p>
               ) : leaderboard.map((entry, i) => {

@@ -43,12 +43,12 @@ interface ActivityEntry {
 function formatRelativeTime(dateStr: string) {
   const diffMs = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diffMs / 60_000);
-  if (mins < 1) return "just nu";
-  if (mins < 60) return `${mins} min sedan`;
+  if (mins < 1) return "nu";
+  if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} tim sedan`;
+  if (hours < 24) return `${hours}t`;
   const days = Math.floor(hours / 24);
-  return `${days} dag${days === 1 ? "" : "ar"} sedan`;
+  return `${days}d`;
 }
 
 interface GamesSectionProps {
@@ -155,7 +155,7 @@ export function GamesSection({ username }: GamesSectionProps) {
   const liveLobbyCount = lobbies.length;
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto scrollbar-nostalgic">
       <div className="gs-wrapper">
         <div className="gs-inner">
           <div className="flex gap-3 items-start p-3">
@@ -255,14 +255,15 @@ export function GamesSection({ username }: GamesSectionProps) {
                         badge = { label: "Silver", icon: "🥈", className: "gs-badge-silver" };
                       } else if (rank === 2) {
                         badge = { label: "Brons", icon: "🥉", className: "gs-badge-bronze" };
-                      } else if (rank >= 3) {
-                        badge = { label: "Se topplistan", icon: "📊", className: "gs-badge-near" };
                       }
+                      // Outside the top 3 there's no badge: "Se topplistan"
+                      // said little beyond "not on the podium" and ate ~90px
+                      // of a ~240px row, squeezing out the username.
                       return (
                         <div key={`${entry.game}-${entry.id}`} className="gs-feed-row">
-                          <span>{entry.game === "snake" ? "🐍" : "🧠"}</span>
+                          <span className="shrink-0">{entry.game === "snake" ? "🐍" : "🧠"}</span>
                           <span className="gs-username font-bold text-[11px]">{entry.username}</span>
-                          <span className="text-[11px]" style={{ color: "#a0c4d8" }}>· {entry.score}p</span>
+                          <span className="text-[11px] whitespace-nowrap shrink-0" style={{ color: "#a0c4d8" }}>· {entry.score}p</span>
                           <span className="gs-time text-[9px]">{formatRelativeTime(entry.created_at)}</span>
                           {badge && (
                             <span className={`gs-badge ${badge.className}`}>
