@@ -169,10 +169,14 @@ Deno.serve(async (req) => {
         ? Math.floor((new Date(appleEvents[appleEvents.length - 1].event_at).getTime() - new Date(session.started_at).getTime()) / 1000)
         : 0;
 
+      // apples_eaten is recorded even when the run was invalidated — the
+      // count is what the event log actually contains, and keeping it makes
+      // a rejected session diagnosable after the fact.
       await supabase.from("snake_sessions").update({
         finished_at: new Date().toISOString(),
         is_valid: !invalidReason,
         score,
+        apples_eaten: appleEvents.length,
       }).eq("id", session.id);
 
       if (invalidReason) {
