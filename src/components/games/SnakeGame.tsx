@@ -83,6 +83,13 @@ export function SnakeGame({ onBack, username }: Props) {
   // previous round can't overwrite sessionTokenRef with a stale token
   // after the player has already restarted (race condition).
   const gameGenerationRef = useRef(0);
+  // Guards against saving the same round twice. Must be a ref, not state:
+  // the game loop runs off a closure captured when the round started, so a
+  // state value read here would be whatever it was at that moment, not now.
+  const scoreSavedRef = useRef(false);
+  // Always points at the newest tick, so the interval below can't get stuck
+  // running a stale one (which would drag stale endGame/saveScore with it).
+  const tickRef = useRef<() => void>(() => {});
 
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover" | "leaderboard">("menu");
   const [score, setScore] = useState(0);
@@ -92,7 +99,6 @@ export function SnakeGame({ onBack, username }: Props) {
     try { return parseInt(localStorage.getItem("snake-best") || "0"); } catch { return 0; }
   });
   const [leaderboard, setLeaderboard] = useState<HighscoreEntry[]>([]);
-  const [scoreSaved, setScoreSaved] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const INVALID_USERNAMES = new Set(["firefox", "chrome", "safari", "edge", "opera", "brave", "vivaldi", "chromium"]);
@@ -116,8 +122,8 @@ export function SnakeGame({ onBack, username }: Props) {
   }, []);
 
   const saveScore = useCallback(async (finalScore: number) => {
-    if (scoreSaved) return;
-    setScoreSaved(true);
+    if (scoreSavedRef.current) return;
+    scoreSavedRef.current = true;
 
     const localKey = 'snake-best';
     const localBest = parseInt(localStorage.getItem(localKey) || '0');
@@ -138,7 +144,7 @@ export function SnakeGame({ onBack, username }: Props) {
     } catch (e) {
       console.warn("Failed to save score:", e);
     }
-  }, [username, scoreSaved]);
+  }, [username]);
 
   const drawGame = useCallback(() => {
     const canvas = canvasRef.current;
@@ -307,7 +313,7 @@ export function SnakeGame({ onBack, username }: Props) {
       speedRef.current = Math.max(MIN_SPEED, speedRef.current - SPEED_INCREASE);
       if (gameLoopRef.current) clearInterval(gameLoopRef.current);
       gameLoopRef.current = setInterval(() => {
-        tick();
+        tickRef.current();
       }, speedRef.current);
     } else {
       newSnake.pop();
@@ -316,6 +322,8 @@ export function SnakeGame({ onBack, username }: Props) {
     snakeRef.current = newSnake;
     drawGame();
   }, [drawGame, endGame]);
+
+  tickRef.current = tick;
 
   const startGame = useCallback(() => {
     snakeRef.current = [{ x: 5, y: 10 }, { x: 4, y: 10 }, { x: 3, y: 10 }];
@@ -331,7 +339,7 @@ export function SnakeGame({ onBack, username }: Props) {
     setScore(0);
     setApplesEaten(0);
     setSeconds(0);
-    setScoreSaved(false);
+    scoreSavedRef.current = false;
     setGameState("playing");
 
     // Only real (non-guest) usernames get a server session, since a
@@ -350,9 +358,9 @@ export function SnakeGame({ onBack, username }: Props) {
     setTimeout(() => {
       drawGame();
       if (gameLoopRef.current) clearInterval(gameLoopRef.current);
-      gameLoopRef.current = setInterval(() => tick(), INITIAL_SPEED);
+      gameLoopRef.current = setInterval(() => tickRef.current(), INITIAL_SPEED);
     }, 50);
-  }, [drawGame, tick]);
+  }, [drawGame, username]);
 
   useEffect(() => {
     if (gameState === "playing") {
