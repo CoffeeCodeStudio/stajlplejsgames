@@ -79,6 +79,10 @@ export function SnakeGame({ onBack, username }: Props) {
   const speedRef = useRef(INITIAL_SPEED);
   const secondsRef = useRef(0);
   const sessionTokenRef = useRef<string | null>(null);
+  // Bumped on every startGame() so a slow/late "start" response from a
+  // previous round can't overwrite sessionTokenRef with a stale token
+  // after the player has already restarted (race condition).
+  const gameGenerationRef = useRef(0);
 
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover" | "leaderboard">("menu");
   const [score, setScore] = useState(0);
@@ -89,6 +93,7 @@ export function SnakeGame({ onBack, username }: Props) {
   });
   const [leaderboard, setLeaderboard] = useState<HighscoreEntry[]>([]);
   const [scoreSaved, setScoreSaved] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const INVALID_USERNAMES = new Set(["firefox", "chrome", "safari", "edge", "opera", "brave", "vivaldi", "chromium"]);
   const BLOCKED_NAMES = ['gäst', 'anonym', 'guest', 'anonymous', 'användarnamn', 'anvndarnamn', 'namn', 'test', 'user'];
@@ -321,6 +326,7 @@ export function SnakeGame({ onBack, username }: Props) {
     applesRef.current = 0;
     speedRef.current = INITIAL_SPEED;
     sessionTokenRef.current = null;
+    const generation = ++gameGenerationRef.current;
 
     setScore(0);
     setApplesEaten(0);
@@ -332,7 +338,12 @@ export function SnakeGame({ onBack, username }: Props) {
     // session is what makes the score eligible to be saved at all.
     if (username && !BLOCKED_NAMES.includes(username.toLowerCase())) {
       callSnakeApi({ action: "start", username }).then(res => {
-        if (res.session_token) sessionTokenRef.current = res.session_token;
+        // Ignore late responses from a round the player already restarted
+        // out of — otherwise this can overwrite the current round's token
+        // with a stale one, sending apple/finish calls to the wrong session.
+        if (res.session_token && gameGenerationRef.current === generation) {
+          sessionTokenRef.current = res.session_token;
+        }
       }).catch(() => {});
     }
 
@@ -389,6 +400,59 @@ export function SnakeGame({ onBack, username }: Props) {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  // The app is normally embedded as an iframe, so we prefer to fullscreen
+  // window.frameElement (making the whole iframe fill the screen) and only
+  // fall back to document.documentElement when frameElement isn't
+  // available — same-origin embeds, or when opened directly outside an
+  // iframe (e.g. local dev).
+  const enterFullscreen = useCallback(async () => {
+    try {
+      const target = (window.frameElement as HTMLElement | null) ?? document.documentElement;
+      const el = target as HTMLElement & { webkitRequestFullscreen?: () => void };
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
+    } catch (e) {
+      console.warn("Fullscreen request failed:", e);
+    }
+  }, []);
+
+  const exitFullscreenMode = useCallback(async () => {
+    try {
+      const doc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (doc.webkitFullscreenElement) {
+        doc.webkitExitFullscreen?.();
+      }
+    } catch (e) {
+      console.warn("Exit fullscreen failed:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const doc = document as Document & { webkitFullscreenElement?: Element };
+      setIsFullscreen(!!(document.fullscreenElement || doc.webkitFullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  // Leave fullscreen automatically once the round ends — the fullscreen
+  // layout only makes sense for the "playing" view.
+  useEffect(() => {
+    if (gameState !== "playing" && isFullscreen) {
+      exitFullscreenMode();
+    }
+  }, [gameState, isFullscreen, exitFullscreenMode]);
 
   const handleDirection = (dir: Direction) => {
     const current = directionRef.current;
@@ -526,12 +590,33 @@ export function SnakeGame({ onBack, username }: Props) {
   const canvasSize = GRID_SIZE * CELL_SIZE;
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="px-3 py-3 space-y-3">
+    <div className={isFullscreen ? "fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-3 overflow-hidden" : "flex-1 overflow-y-auto"}>
+      {/* Always-visible exit control while in fullscreen — browsers can
+          hide their own chrome entirely, so this is the only way out. */}
+      {isFullscreen && (
+        <button
+          onClick={exitFullscreenMode}
+          className="fixed top-3 right-3 z-[60] retro-btn text-sm py-1.5 px-3"
+        >
+          ✕ Avsluta fullscreen
+        </button>
+      )}
+
+      <div className={isFullscreen ? "flex flex-col items-center gap-3 w-full max-w-md" : "px-3 py-3 space-y-3"}>
         {/* HUD bar */}
-        <div className="retro-panel">
+        <div className="retro-panel w-full">
           <div className="retro-panel-body p-2 flex items-center justify-between">
-            <button onClick={() => { endGame(); setGameState("menu"); }} className="retro-btn text-base py-0.5 px-2">✕ AVSLUTA</button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => { endGame(); setGameState("menu"); }} className="retro-btn text-base py-0.5 px-2">✕ AVSLUTA</button>
+              {!isFullscreen && (
+                <button
+                  onClick={enterFullscreen}
+                  className="retro-btn text-base py-0.5 px-2 md:hidden"
+                  aria-label="Fullskärm"
+                  title="Fullskärm"
+                >⛶</button>
+              )}
+            </div>
             <div className="flex items-center gap-4 font-pixel text-xs">
               <span className="text-muted-foreground">⏱ {formatTime(seconds)}</span>
               <span style={{ color: '#ff1111' }}>🍎 {applesEaten}</span>
@@ -542,13 +627,15 @@ export function SnakeGame({ onBack, username }: Props) {
 
         {/* Game canvas with retro glow border — scales down to fit narrow
             screens (width: 100%) but never grows past the native pixel
-            grid (maxWidth), so it stays crisp on desktop. */}
-        <div className="flex justify-center">
+            grid (maxWidth), so it stays crisp on desktop. In fullscreen it
+            instead caps against the viewport (min(92vw, 55vh)) so it fits
+            above the D-pad on short mobile screens. */}
+        <div className="flex justify-center w-full">
           <div
             className="relative"
             style={{
               width: "100%",
-              maxWidth: canvasSize + 4,
+              maxWidth: isFullscreen ? "min(92vw, 55vh)" : canvasSize + 4,
               aspectRatio: "1 / 1",
               border: '2px solid #00ff44',
               boxShadow: '0 0 12px rgba(0, 255, 68, 0.4), inset 0 0 12px rgba(0, 255, 68, 0.1)',
@@ -564,8 +651,9 @@ export function SnakeGame({ onBack, username }: Props) {
           </div>
         </div>
 
-        {/* Touch controls - mobile only */}
-        <div className="flex justify-center md:hidden mt-4">
+        {/* Touch controls — mobile only outside fullscreen; always shown
+            once fullscreen is active, since that's only reachable on mobile. */}
+        <div className={isFullscreen ? "flex justify-center mt-2" : "flex justify-center md:hidden mt-8"}>
           <div className="grid grid-cols-3 gap-3" style={{ width: 240 }}>
             <div />
             <button
@@ -596,9 +684,11 @@ export function SnakeGame({ onBack, username }: Props) {
           </div>
         </div>
 
-        <p className="text-center text-[9px] text-muted-foreground font-pixel hidden md:block">
-          PILTANGENTER / WASD
-        </p>
+        {!isFullscreen && (
+          <p className="text-center text-[9px] text-muted-foreground font-pixel hidden md:block">
+            PILTANGENTER / WASD
+          </p>
+        )}
       </div>
     </div>
   );

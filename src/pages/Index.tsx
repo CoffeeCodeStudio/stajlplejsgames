@@ -28,7 +28,7 @@ export default function GamesPage() {
   console.log("Index: isEmbedded is true — GamesSection will mount");
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col w-full">
+    <div className="min-h-screen bg-background text-foreground flex flex-col w-full max-w-[500px] mx-auto">
       {/* Top navigation bar */}
       <header className="retro-nav text-base">
         <span className="retro-nav-item active">🎮 SPEL</span>
